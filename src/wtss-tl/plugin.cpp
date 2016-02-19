@@ -24,54 +24,63 @@
   \author Gilberto Ribeiro de Queiroz
  */
 
-// TWS
-#include "wtss.hpp"
-
-// TerraLib
-#include <terralib/plugin/Plugin.h>
-
+//wtss
+#include "plugin.hpp"
 // STL
 #include <memory>
+#include <terralib/qt/af/ApplicationController.h>
+#include <terralib/qt/af/events/ApplicationEvents.h>
+#include <iostream>
 
-class Plugin : public te::plugin::Plugin
+Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo) : 
+QObject(),
+te::plugin::Plugin(pluginInfo)
 {
-  public:
+  te::qt::af::AppCtrlSingleton::getInstance().addListener(this, te::qt::af::SENDER);
+}
 
-    Plugin(const te::plugin::PluginInfo& pluginInfo)
-      : te::plugin::Plugin(pluginInfo)
-    {
-    }
+Plugin::~Plugin()
+{
+}
 
-    ~Plugin()
-    {
-    }
+void Plugin::startup()
+{
+  if(m_initialized)
+    return;
+  //tws::wtss::register_operations();
+  //tws::wtss::initialize_operations();
 
-    void startup()
-    {
-      if(m_initialized)
-        return;
+  m_initialized = true;
 
-      //tws::wtss::register_operations();
+  {
+      // m_showWindow = new QAction(QIcon::fromTheme("file-vector"), tr("Vector File..."), this);
+      // m_showWindow->setObjectName("Project.Add Layer.Vector File");
 
-      //tws::wtss::initialize_operations();
+      // te::qt::af::evt::NewActionsAvailable e;
+      // e.m_category = "Dataaccess";
+      // e.m_actions << m_showWindow;
 
-      m_initialized = true;
-    }
+      // emit triggered(&e);
 
-    void shutdown()
-    {
-      if(!m_initialized)
-        return;
+      // connect (m_showWindow, SIGNAL(triggered()), SLOT(showWindow()));
+  }
 
-      //tws::core::http_server_builder::instance().remove("mongoose");
+}
 
-      m_initialized = false;
-    }
-};
+void Plugin::shutdown()
+{
+  if(!m_initialized)
+    return;
 
-#define export_macro
+  //tws::core::http_server_builder::instance().remove("mongoose");
 
-PLUGIN_CALL_BACK_DECLARATION(export_macro)
+  m_initialized = false;
+}
+
+void Plugin::showWindow()
+{
+  //place holder
+}
 
 PLUGIN_CALL_BACK_IMPL(Plugin)
 
