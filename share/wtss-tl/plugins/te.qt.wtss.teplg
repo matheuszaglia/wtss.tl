@@ -19,7 +19,7 @@
     <Email>esensing-team@dpi.inpe.br</Email>
   </Provider>
   <Resources>
-    <Resource name="SharedLibraryName" xlink:href="terralib_mod_wtss_plugin"/>
+    <Resource name="SharedLibraryName" xlink:href="terralib_mod_qt_wtss_plugin"/>
     <Resource name="LangFile" xlink:href="pt.br"/>
   </Resources>
 </PluginInfo>
