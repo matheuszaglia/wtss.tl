@@ -26,7 +26,7 @@
 
 cmake_minimum_required(VERSION 2.8.12)
 
-project(terralib_mod_wtss)
+project(terralib_mod_qt_wtss)
 
 #
 # main variables for the build script
@@ -46,6 +46,8 @@ set(WTSS_TL_ABSOLUTE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
 # variables that control paths
 set(WTSS_TL_BASE_DESTINATION_DIR "")
+
+
 
 # variables that control install locations
 if(NOT DEFINED WTSS_TL_DESTINATION_UNITTEST)
@@ -71,7 +73,6 @@ endif()
 if(NOT DEFINED WTSS_TL_DESTINATION_SHARE)
   set(WTSS_TL_DESTINATION_HEADERS "${WTSS_TL_BASE_DESTINATION_DIR}share")
 endif()
-
 
 #
 # global definitions, includes and config
@@ -147,6 +148,8 @@ endif()
 
 find_package(terralib REQUIRED)
 
+find_package(Qt5PrintSupport REQUIRED)
+
 #find_package(RapidJSON REQUIRED)
 
 #find_package(CppNetLib REQUIRED)
@@ -164,7 +167,7 @@ find_package(terralib REQUIRED)
 # add include targets
 #
 include_directories(${Boost_INCLUDE_DIR})
-include_directories(${terralib_INCLUDE_DIR})
+include_directories(${terralib_INCLUDE_DIRS})
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -181,13 +184,14 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 file(GLOB WTSS_TL_SRC_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl/*.cpp)
 file(GLOB WTSS_TL_HDR_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl/*.hpp)
 
-add_library(terralib_mod_wtss_plugin SHARED ${WTSS_TL_SRC_FILES} ${WTSS_TL_HDR_FILES})
+add_library(terralib_mod_qt_wtss_plugin SHARED ${WTSS_TL_SRC_FILES} ${WTSS_TL_HDR_FILES})
 
-target_link_libraries(terralib_mod_wtss_plugin wtss_cxx_client
+target_link_libraries(terralib_mod_qt_wtss_plugin #wtss_cxx_client
                                      terralib_mod_plugin
+                                     terralib_mod_qt_apf
                                      ${Boost_SYSTEM_LIBRARY})
 
-qt5_use_modules(terralib_mod_wtss_plugin Widgets)
+qt5_use_modules(terralib_mod_qt_wtss_plugin Widgets Network Core)
 
 # wtss.tl unit-test
 include_directories(${WTSS_TL_ABSOLUTE_ROOT_DIR}/src)
@@ -195,19 +199,20 @@ include_directories(${WTSS_TL_ABSOLUTE_ROOT_DIR}/src)
 file(GLOB WTSS_TL_UTEST_SRC_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/unittest/*.cpp)
 file(GLOB WTSS_TL_UTEST_HDR_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/unittest/*.hpp)
 
-add_executable(terralib_mod_wtss_unittest ${WTSS_TL_UTEST_HDR_FILES} ${WTSS_TL_UTEST_SRC_FILES})
+#add_executable(terralib_mod_wtss_unittest ${WTSS_TL_UTEST_HDR_FILES} ${WTSS_TL_UTEST_SRC_FILES})
 
-target_link_libraries(terralib_mod_wtss_unittest terralib_mod_wtss_plugin)
+# target_link_libraries(terralib_mod_wtss_unittest terralib_mod_qt_wtss_plugin Qt5::PrintSupport)
+target_link_libraries(terralib_mod_qt_wtss_plugin Qt5::PrintSupport)
 
-qt5_use_modules(terralib_mod_wtss_unittest Widgets)
+#qt5_use_modules(terralib_mod_wtss_unittest Widgets Network Core)
 
 # file organization in some IDEs
 source_group("wtss_tl\\Source Files"  FILES ${WTSS_TL_SRC_FILES})
 source_group("wtss_tl\\Header Files"  FILES ${WTSS_TL_HDR_FILES})
 #source_group("wtss_tl\\ui"            FILES ${WTSS_TL_UI_FILES})
 
-source_group("wtss_unittest\\Source Files"  FILES ${WTSS_TL_UTEST_SRC_FILES})
-source_group("wtss_unittest\\Header Files"  FILES ${WTSS_TL_UTEST_HDR_FILES})
+# source_group("wtss_unittest\\Source Files"  FILES ${WTSS_TL_UTEST_SRC_FILES})
+# source_group("wtss_unittest\\Header Files"  FILES ${WTSS_TL_UTEST_HDR_FILES})
 
 
 #
@@ -217,24 +222,27 @@ source_group("wtss_unittest\\Header Files"  FILES ${WTSS_TL_UTEST_HDR_FILES})
 configure_file(${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl/version.hpp.in
                ${CMAKE_BINARY_DIR}/wtss_tl_version.hpp @ONLY)
 
-
 #
 # install and targets export
 #
 
-install(TARGETS terralib_mod_wtss_plugin
+install(TARGETS terralib_mod_qt_wtss_plugin
         EXPORT wtss_tl-targets
         RUNTIME DESTINATION ${WTSS_TL_DESTINATION_RUNTIME} COMPONENT runtime
         LIBRARY DESTINATION ${WTSS_TL_DESTINATION_LIBRARY} COMPONENT runtime
         ARCHIVE DESTINATION ${WTSS_TL_DESTINATION_ARCHIVE} COMPONENT runtime)
 
-
 install(FILES ${CMAKE_BINARY_DIR}/wtss_tl_version.hpp
               ${WTSS_TL_HDR_FILES}
         DESTINATION ${WTSS_TL_DESTINATION_HEADERS}/wtss-tl COMPONENT devel)
 
+install(FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/share/wtss-tl/plugins/te.qt.wtss.teplg
+        DESTINATION ${terralib_DIR}/../../../share/terralib/plugins COMPONENT runtime)
 
-install(FILES ${WTSS_TL_UTEST_SRC_FILES}
-        DESTINATION ${WTSS_TL_DESTINATION_UNITTEST} COMPONENT devel)
+install(DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib
+        DESTINATION ${terralib_DIR}/../../.. COMPONENT runtime)
 
-export(TARGETS terralib_mod_wtss_plugin FILE ${CMAKE_BINARY_DIR}/wtss-tl-exports.cmake)
+# install(FILES ${WTSS_TL_UTEST_SRC_FILES}
+#         DESTINATION ${WTSS_TL_DESTINATION_UNITTEST} COMPONENT devel)
+
+export(TARGETS terralib_mod_qt_wtss_plugin FILE ${CMAKE_BINARY_DIR}/wtss-tl-exports.cmake)
