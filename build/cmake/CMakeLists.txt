@@ -150,6 +150,8 @@ find_package(terralib REQUIRED)
 
 find_package(Qt5PrintSupport REQUIRED)
 
+find_package(wtss_cxx_client REQUIRED)
+
 #find_package(RapidJSON REQUIRED)
 
 #find_package(CppNetLib REQUIRED)
@@ -183,13 +185,18 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # wtss.tl client library
 file(GLOB WTSS_TL_SRC_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl/*.cpp)
 file(GLOB WTSS_TL_HDR_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl/*.hpp)
+file(GLOB WTSS_TL_UI_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl/ui/*.ui)
+
+QT5_WRAP_UI(WTSS_TL_HDR_FILES ${WTSS_TL_UI_FILES})
 
 add_library(terralib_mod_qt_wtss_plugin SHARED ${WTSS_TL_SRC_FILES} ${WTSS_TL_HDR_FILES})
 
-target_link_libraries(terralib_mod_qt_wtss_plugin #wtss_cxx_client
-                                     terralib_mod_plugin
-                                     terralib_mod_qt_apf
-                                     ${Boost_SYSTEM_LIBRARY})
+target_link_libraries(terralib_mod_qt_wtss_plugin
+                      ${wtss_cxx_client_LIBRARY}
+                      terralib_mod_plugin
+                      terralib_mod_qt_apf
+                      ${Boost_SYSTEM_LIBRARY})
+
 
 qt5_use_modules(terralib_mod_qt_wtss_plugin Widgets Network Core)
 
@@ -209,7 +216,7 @@ target_link_libraries(terralib_mod_qt_wtss_plugin Qt5::PrintSupport)
 # file organization in some IDEs
 source_group("wtss_tl\\Source Files"  FILES ${WTSS_TL_SRC_FILES})
 source_group("wtss_tl\\Header Files"  FILES ${WTSS_TL_HDR_FILES})
-#source_group("wtss_tl\\ui"            FILES ${WTSS_TL_UI_FILES})
+source_group("wtss_tl\\ui"            FILES ${WTSS_TL_UI_FILES})
 
 # source_group("wtss_unittest\\Source Files"  FILES ${WTSS_TL_UTEST_SRC_FILES})
 # source_group("wtss_unittest\\Header Files"  FILES ${WTSS_TL_UTEST_HDR_FILES})
