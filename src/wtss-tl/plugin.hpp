@@ -7,10 +7,12 @@
 
 #include <QObject>
 
+
 #define TE_QT_WTSS_PLUGIN_NAME "te.qt.wtss"
 
 
-class QAction;
+#include  <QAction>
+#include <QMenu>
 
 namespace te
 {
@@ -41,15 +43,18 @@ class Plugin : public QObject, public te::plugin::Plugin
 
     void shutdown();
 
-  // protected slots:
-  //   void showWindow();
+  protected slots:
+    void showWindow();
 
   signals:
 
     void triggered(te::qt::af::evt::Event* e);
 
-  //protected:
- //   QAction* m_showWindow;
+  protected:
+
+    QAction* m_showWindow;
+    QMenu* m_wtssMenu;
+
 
 };
 

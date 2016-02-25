@@ -22,15 +22,16 @@
   \brief Add a plugin interface for dynamic loading of the Web Time Series Data Service plugin.
 
   \author Gilberto Ribeiro de Queiroz
+  \author Matheus Cavassan Zaglia
  */
 
 //wtss
 #include "plugin.hpp"
 // STL
-#include <memory>
 #include <terralib/qt/af/ApplicationController.h>
 #include <terralib/qt/af/events/ApplicationEvents.h>
 #include <iostream>
+#include <wtss-cxx/wtss.hpp>
 
 Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo) : 
 QObject(),
@@ -47,22 +48,19 @@ void Plugin::startup()
 {
   if(m_initialized)
     return;
-  //tws::wtss::register_operations();
-  //tws::wtss::initialize_operations();
 
   m_initialized = true;
 
   {
-      // m_showWindow = new QAction(QIcon::fromTheme("file-vector"), tr("Vector File..."), this);
-      // m_showWindow->setObjectName("Project.Add Layer.Vector File");
+    // m_showWindow = new QAction(QIcon::fromTheme("file-vector"), tr("Vector File..."), this);
+    // m_showWindow->setObjectName("Project.Add Layer.Vector File");
 
-      // te::qt::af::evt::NewActionsAvailable e;
-      // e.m_category = "Dataaccess";
-      // e.m_actions << m_showWindow;
+    // te::qt::af::evt::NewActionsAvailable e;
+    // e.m_category = "Dataaccess";
+    // e.m_actions << m_showWindow;
+    // emit triggered(&e);
 
-      // emit triggered(&e);
-
-      // connect (m_showWindow, SIGNAL(triggered()), SLOT(showWindow()));
+    // connect (m_showWindow, SIGNAL(triggered()), SLOT(showWindow()));
   }
 
 }
@@ -72,14 +70,11 @@ void Plugin::shutdown()
   if(!m_initialized)
     return;
 
-  //tws::core::http_server_builder::instance().remove("mongoose");
-
   m_initialized = false;
 }
 
 void Plugin::showWindow()
 {
-  //place holder
 }
 
 PLUGIN_CALL_BACK_IMPL(Plugin)
