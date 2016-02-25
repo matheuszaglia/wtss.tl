@@ -26,27 +26,25 @@
 #  RAPIDJSON_FOUND       - True if WTSS.CXX found.
 #
 
-find_path(wtss_cxx_client_INCLUDE_DIR wtss-cxx/wtss.hpp
-          PATHS /usr
-                /usr/local
-          PATH_SUFFIXES include
-                        include/wtss-cxx)
+# find_path(wtss_cxx_client_INCLUDE_DIR wtss-cxx/wtss.hpp
+#           PATHS /usr
+#                 /usr/local
+#           PATH_SUFFIXES include
+#                         include/wtss-cxx)
 
-find_library(wtss_cxx_client_LIBRARY
-            NAMES wtss_cxx_client
-            PATHS /usr
-                  /usr/local
-            PATH_SUFFIXES
-            lib
-            )
-include(FindPackageHandleStandardArgs)
+# find_library(wtss_cxx_client_LIBRARY
+#             NAMES wtss_cxx_client
+#             PATHS /usr
+#                   /usr/local
+#             PATH_SUFFIXES
+#             lib
+#             )
+# include(FindPackageHandleStandardArgs)
 
-set(wtss_cxx_client ${wtss_cxx_client_LIBRARY})
+# FIND_PACKAGE_HANDLE_STANDARD_ARGS(wtts_cxx_client DEFAULT_MSG wtss_cxx_client_INCLUDE_DIR wtss_cxx_client_LIBRARY)
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(wtts_cxx_client DEFAULT_MSG wtss_cxx_client_INCLUDE_DIR wtss_cxx_client_LIBRARY)
+# mark_as_advanced(wtss_cxx_client_INCLUDE_DIR wtss_cxx_client_LIBRARY)
 
-mark_as_advanced(wtss_cxx_client_INCLUDE_DIR wtss_cxx_client_LIBRARY)
-
-if(wtss_cxx_client_FOUND)
-  mark_as_advanced(wtss_cxx_client_ROOT)
-endif()
+# if(wtss_cxx_client_FOUND)
+#   mark_as_advanced(wtss_cxx_client_ROOT)
+# endif()
