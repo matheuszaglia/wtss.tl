@@ -13,6 +13,12 @@
 #include <QAction>
 #include <QMenu>
 
+//STL
+#include <vector>
+
+//wtss.tl
+#include "server_config.hpp"
+
 
 namespace te
 {
@@ -61,9 +67,10 @@ namespace wtss_tl{
       QAction* m_describeCoverage;
       QAction* m_timeSeries;
       QMenu* m_wtssMenu;
+
       server_config_action* m_serverAction;
 
-
+      std::vector<server_t> servers;
   };
 
 }

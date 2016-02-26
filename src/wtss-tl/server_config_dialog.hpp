@@ -22,9 +22,12 @@
 
 // STL
 #include <memory>
-
+//QT
 #include <QDialog>
 #include <QObject>
+#include <QtGui>
+//wtss.tl
+#include "server_config.hpp"
 
 namespace Ui { class server_config_dialog_form; }
 
@@ -43,9 +46,12 @@ namespace wtss_tl{
 
       void onServerAddButtonClicked();
 
-    private:
+      void onServerRemoveButtonClicked();
+  private:
 
       std::auto_ptr<Ui::server_config_dialog_form> m_ui;
+
+      std::vector<wtss_tl::server_t> servers;
   };
 }
 

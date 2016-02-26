@@ -81,7 +81,7 @@ void wtss_tl::Plugin::shutdown()
 void wtss_tl::Plugin::registerActions()
 {
   m_serverAction = new wtss_tl::server_config_action(m_wtssMenu);
-  connect(m_serverAction, SIGNAL(triggered()), SLOT(onActionActivated()));
+  connect(m_serverAction, SIGNAL(clicked()), SLOT(onActionActivated()));
 }
 
 void wtss_tl::Plugin::unregisterActions()
