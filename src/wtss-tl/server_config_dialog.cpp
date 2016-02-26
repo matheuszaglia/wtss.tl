@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2016 National Institute For Space Research (INPE) - Brazil.
 
-  This file is part of the WTSS.CXX.
+  This file is part of the WTSS.TL.
 
   WTSS.TL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 3 as
@@ -13,28 +13,26 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
-/*!
-  \file unittest/main.cpp
+#include "server_config_dialog.hpp"
+#include "ui_server_config_dialog_form.h"
 
-  \brief Unit-test for WTSS.TL.
+wtss_tl::server_config_dialog::server_config_dialog(QWidget *parent, Qt::WindowFlags f):
+QDialog(parent, f),
+m_ui(new Ui::server_config_dialog_form)
+{
+  m_ui->setupUi(this);
+  this->setWindowTitle(tr("Web Time Series Servers"));
+}
 
-  \author Matheus Cavassan Zaglia
- */
-
-// WTSS.TL
-#include <wtss-tl/wtss.hpp>
-
-// STL
-#include <cstdlib>
-#include <QtGui>
-#include <QApplication>
-
-int main(int argc, char* argv[])
+wtss_tl::server_config_dialog::~server_config_dialog()
 {
 
-  return EXIT_SUCCESS;
+}
+
+void wtss_tl::server_config_dialog::onServerAddButtonClicked()
+{
 
 }

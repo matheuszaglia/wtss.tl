@@ -13,20 +13,32 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
-/*!
-  \file wtss-tl/wtss.cpp
+#include "abstract_action.hpp"
 
-  \brief Brief.
+wtss_tl::abstract_action::abstract_action(QMenu* menu):
+QObject(),
+m_menu(menu),
+m_action(0)
+{
+}
 
-  \author Matheus Cavassan Zaglia
- */
+wtss_tl::abstract_action::~abstract_action()
+{
+}
 
-// WTSS.TL
-//#include "wtss.hpp"
-//#include <wtss-cxx/wtss.hpp>
+void wtss_tl::abstract_action::createAction(std::string name, std::string pixmap)
+{
+  m_action = new QAction(m_menu);
 
+  m_action->setText(name.c_str());
 
+  if(pixmap.empty() == false)
+    m_action->setIcon(QIcon::fromTheme(pixmap.c_str()));
 
+  connect(m_action, SIGNAL(triggered()), this, SLOT(onActionActivated()));
+
+  m_menu->addAction(m_action);
+}

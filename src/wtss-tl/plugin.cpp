@@ -31,20 +31,24 @@
 #include <terralib/qt/af/ApplicationController.h>
 #include <terralib/qt/af/events/ApplicationEvents.h>
 #include <iostream>
-#include <wtss-cxx/wtss.hpp>
 
-Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo) : 
-QObject(),
-te::plugin::Plugin(pluginInfo)
+//wtss.tl
+#include "wtss.hpp"
+#include "server_config_action.hpp"
+
+
+wtss_tl::Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo) :
+  QObject(),
+  te::plugin::Plugin(pluginInfo)
 {
   te::qt::af::AppCtrlSingleton::getInstance().addListener(this, te::qt::af::SENDER);
 }
 
-Plugin::~Plugin()
+wtss_tl::Plugin::~Plugin()
 {
 }
 
-void Plugin::startup()
+void wtss_tl::Plugin::startup()
 {
   if(m_initialized)
     return;
@@ -52,20 +56,21 @@ void Plugin::startup()
   m_initialized = true;
 
   {
-    // m_showWindow = new QAction(QIcon::fromTheme("file-vector"), tr("Vector File..."), this);
-    // m_showWindow->setObjectName("Project.Add Layer.Vector File");
 
-    // te::qt::af::evt::NewActionsAvailable e;
-    // e.m_category = "Dataaccess";
-    // e.m_actions << m_showWindow;
-    // emit triggered(&e);
+    m_wtssMenu = te::qt::af::AppCtrlSingleton::getInstance().getMenu("Tools");
 
-    // connect (m_showWindow, SIGNAL(triggered()), SLOT(showWindow()));
+//    m_wtssMenu = new QMenu(m_menu);
+//    m_actionManageServers->setText("Web Time Series Servers...");
+//    m_actionManageServers->setIcon(QIcon::fromTheme("chart-time-series"));
+//    m_actionManageServers->setObjectName("WTSS.manage");
+
+    registerActions();
+
   }
 
 }
 
-void Plugin::shutdown()
+void wtss_tl::Plugin::shutdown()
 {
   if(!m_initialized)
     return;
@@ -73,9 +78,16 @@ void Plugin::shutdown()
   m_initialized = false;
 }
 
-void Plugin::showWindow()
+void wtss_tl::Plugin::registerActions()
 {
+  m_serverAction = new wtss_tl::server_config_action(m_wtssMenu);
+  connect(m_serverAction, SIGNAL(triggered()), SLOT(onActionActivated()));
 }
 
-PLUGIN_CALL_BACK_IMPL(Plugin)
+void wtss_tl::Plugin::unregisterActions()
+{
+
+}
+
+PLUGIN_CALL_BACK_IMPL(wtss_tl::Plugin)
 

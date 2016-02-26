@@ -1,18 +1,18 @@
-// TWS
-#include "wtss.hpp"
+
+
+#ifndef __WTSS_PLUGIN_HPP__
+#define __WTSS_PLUGIN_HPP__
+
+#define TE_QT_WTSS_PLUGIN_NAME "te.qt.wtss"
+
 // TerraLib
 #include <terralib/plugin/Plugin.h>
 
 //QT
-
 #include <QObject>
-
-
-#define TE_QT_WTSS_PLUGIN_NAME "te.qt.wtss"
-
-
-#include  <QAction>
+#include <QAction>
 #include <QMenu>
+
 
 namespace te
 {
@@ -28,38 +28,49 @@ namespace te
   }
 }
 
+namespace wtss_tl{
+  class server_config_action;
+  class Plugin : public QObject, public te::plugin::Plugin
+  {
+    Q_OBJECT
 
-class Plugin : public QObject, public te::plugin::Plugin
-{
-  Q_OBJECT
+    public:
 
-  public:
+      Plugin(const te::plugin::PluginInfo& pluginInfo);
 
-    Plugin(const te::plugin::PluginInfo& pluginInfo);
+      ~Plugin();
 
-    ~Plugin();
+      void startup();
 
-    void startup();
+      void shutdown();
 
-    void shutdown();
+    protected:
 
-  protected slots:
-    void showWindow();
+      void registerActions();
 
-  signals:
+      void unregisterActions();
 
-    void triggered(te::qt::af::evt::Event* e);
+    Q_SIGNALS:
 
-  protected:
+      void triggered(te::qt::af::evt::Event* e);
 
-    QAction* m_showWindow;
-    QMenu* m_wtssMenu;
+    protected:
+
+      QAction* m_actionManageServers;
+      QAction* m_listCoverages;
+      QAction* m_describeCoverage;
+      QAction* m_timeSeries;
+      QMenu* m_wtssMenu;
+      server_config_action* m_serverAction;
 
 
-};
+  };
 
-
+}
 
 #define export_macro
 
 PLUGIN_CALL_BACK_DECLARATION(export_macro)
+
+
+#endif

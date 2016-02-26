@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2016 National Institute For Space Research (INPE) - Brazil.
 
-  This file is part of the WTSS.CXX.
+  This file is part of the WTSS.TL.
 
   WTSS.TL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 3 as
@@ -16,25 +16,30 @@
   with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
-/*!
-  \file unittest/main.cpp
 
-  \brief Unit-test for WTSS.TL.
+#include <terralib/qt/af/ApplicationController.h>
 
-  \author Matheus Cavassan Zaglia
- */
+#include "server_config_action.hpp"
+#include "server_config_dialog.hpp"
 
-// WTSS.TL
-#include <wtss-tl/wtss.hpp>
+wtss_tl::server_config_action::server_config_action(QMenu *menu) : wtss_tl::abstract_action(menu)
+{
+  createAction(tr("Web Time Series Servers...").toStdString(), "chart-time-series");
+  m_action->setObjectName("Tools.WTSS.Web Time Series Server");
+}
 
-// STL
-#include <cstdlib>
-#include <QtGui>
-#include <QApplication>
 
-int main(int argc, char* argv[])
+wtss_tl::server_config_action::~server_config_action()
 {
 
-  return EXIT_SUCCESS;
+}
+
+void wtss_tl::server_config_action::onActionActivated()
+{
+  QWidget* parent = te::qt::af::AppCtrlSingleton::getInstance().getMainWindow();
+  wtss_tl::server_config_dialog dialog(parent);
+
+  if(dialog.exec() != QDialog::Accepted)
+    return;
 
 }
