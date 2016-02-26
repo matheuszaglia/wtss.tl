@@ -205,20 +205,20 @@ include_directories(${WTSS_TL_ABSOLUTE_ROOT_DIR}/src)
 file(GLOB WTSS_TL_UTEST_SRC_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/unittest/*.cpp)
 file(GLOB WTSS_TL_UTEST_HDR_FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/unittest/*.hpp)
 
-#add_executable(terralib_mod_wtss_unittest ${WTSS_TL_UTEST_HDR_FILES} ${WTSS_TL_UTEST_SRC_FILES})
+add_executable(terralib_mod_wtss_unittest ${WTSS_TL_UTEST_HDR_FILES} ${WTSS_TL_UTEST_SRC_FILES})
 
-# target_link_libraries(terralib_mod_wtss_unittest terralib_mod_qt_wtss_plugin Qt5::PrintSupport)
+target_link_libraries(terralib_mod_wtss_unittest terralib_mod_qt_wtss_plugin Qt5::PrintSupport)
 target_link_libraries(terralib_mod_qt_wtss_plugin Qt5::PrintSupport)
 
-#qt5_use_modules(terralib_mod_wtss_unittest Widgets Network Core)
+qt5_use_modules(terralib_mod_wtss_unittest Widgets Network Core)
 
 # file organization in some IDEs
 source_group("wtss_tl\\Source Files"  FILES ${WTSS_TL_SRC_FILES})
 source_group("wtss_tl\\Header Files"  FILES ${WTSS_TL_HDR_FILES})
 source_group("wtss_tl\\ui"            FILES ${WTSS_TL_UI_FILES})
 
-# source_group("wtss_unittest\\Source Files"  FILES ${WTSS_TL_UTEST_SRC_FILES})
-# source_group("wtss_unittest\\Header Files"  FILES ${WTSS_TL_UTEST_HDR_FILES})
+source_group("wtss_unittest\\Source Files"  FILES ${WTSS_TL_UTEST_SRC_FILES})
+source_group("wtss_unittest\\Header Files"  FILES ${WTSS_TL_UTEST_HDR_FILES})
 
 
 #
@@ -248,7 +248,7 @@ install(FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/share/wtss-tl/plugins/te.qt.wtss.tepl
 install(DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib
         DESTINATION ${terralib_DIR}/../../.. COMPONENT runtime)
 
-# install(FILES ${WTSS_TL_UTEST_SRC_FILES}
-#         DESTINATION ${WTSS_TL_DESTINATION_UNITTEST} COMPONENT devel)
+install(FILES ${WTSS_TL_UTEST_SRC_FILES}
+         DESTINATION ${WTSS_TL_DESTINATION_UNITTEST} COMPONENT devel)
 
 export(TARGETS terralib_mod_qt_wtss_plugin FILE ${CMAKE_BINARY_DIR}/wtss-tl-exports.cmake)
