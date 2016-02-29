@@ -25,13 +25,10 @@
 #include <vector>
 
 namespace wtss_tl{
-  struct attribute_t{
-    std::vector<std::string> name;
-  };
 
   struct coverage_t{
     std::string name;
-    attribute_t attributes;
+    std::vector<std::string> attributes;
   };
 
   struct server_t{

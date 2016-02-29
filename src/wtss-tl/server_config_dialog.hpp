@@ -22,12 +22,15 @@
 
 // STL
 #include <memory>
+#include <string>
 //QT
 #include <QDialog>
 #include <QObject>
 #include <QtGui>
 //wtss.tl
 #include "server_config.hpp"
+
+#include <wtss-cxx/data_types.hpp>
 
 namespace Ui { class server_config_dialog_form; }
 
@@ -47,11 +50,13 @@ namespace wtss_tl{
       void onServerAddButtonClicked();
 
       void onServerRemoveButtonClicked();
+
+      void onListServerItemSelected();
   private:
 
       std::auto_ptr<Ui::server_config_dialog_form> m_ui;
 
-      std::vector<wtss_tl::server_t> servers;
+      std::map<std::string, wtss_cxx::geoarray_t> servers;
   };
 }
 

@@ -23,19 +23,39 @@
 //wtss.tl
 #include "abstract_action.hpp"
 
+namespace te
+{
+  namespace qt
+  {
+    namespace af
+    {
+      namespace evt
+      {
+        struct Event;
+      }
+    }
+  }
+}
+
+
 namespace wtss_tl
 {
-  class server_config_action : public wtss_tl::abstract_action
+  class server_config_action : public abstract_action
   {
     Q_OBJECT
     public:
 
-    server_config_action(QMenu* menu);
-    virtual ~server_config_action();
+      server_config_action(QMenu* menu);
+      virtual ~server_config_action();
 
     protected slots:
 
-    virtual void onActionActivated();
+      virtual void onActionActivated();
+
+    Q_SIGNALS:
+
+      void triggered(te::qt::af::evt::Event* e);
+
   };
 }
 

@@ -63,9 +63,6 @@ namespace wtss_tl{
     protected:
 
       QAction* m_actionManageServers;
-      QAction* m_listCoverages;
-      QAction* m_describeCoverage;
-      QAction* m_timeSeries;
       QMenu* m_wtssMenu;
 
       server_config_action* m_serverAction;

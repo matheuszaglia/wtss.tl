@@ -58,10 +58,6 @@ namespace wtss_tl{
 
       void createAction(std::string name, std::string pixmap = "");
 
-  //    void addNewLayer(te::map::AbstractLayerPtr layer);
-
-  //    std::list<te::map::AbstractLayerPtr> getLayers();
-
     Q_SIGNALS:
 
       void triggered(te::qt::af::evt::Event* e);

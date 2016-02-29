@@ -59,11 +59,6 @@ void wtss_tl::Plugin::startup()
 
     m_wtssMenu = te::qt::af::AppCtrlSingleton::getInstance().getMenu("Tools");
 
-//    m_wtssMenu = new QMenu(m_menu);
-//    m_actionManageServers->setText("Web Time Series Servers...");
-//    m_actionManageServers->setIcon(QIcon::fromTheme("chart-time-series"));
-//    m_actionManageServers->setObjectName("WTSS.manage");
-
     registerActions();
 
   }
@@ -80,8 +75,8 @@ void wtss_tl::Plugin::shutdown()
 
 void wtss_tl::Plugin::registerActions()
 {
-  m_serverAction = new wtss_tl::server_config_action(m_wtssMenu);
-  connect(m_serverAction, SIGNAL(clicked()), SLOT(onActionActivated()));
+  m_serverAction = new server_config_action(m_wtssMenu);
+  connect(m_serverAction, SIGNAL(triggered(te::qt::af::evt::Event*)), SIGNAL(triggered(te::qt::af::evt::Event*)));
 }
 
 void wtss_tl::Plugin::unregisterActions()
