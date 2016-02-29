@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2016 National Institute For Space Research (INPE) - Brazil.
 
-  This file is part of the WTSS.CXX.
+  This file is part of the WTSS.TL.
 
   WTSS.TL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 3 as
@@ -16,25 +16,48 @@
   with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
-/*!
-  \file unittest/main.cpp
 
-  \brief Unit-test for WTSS.TL.
+#ifndef __WTSS_TL_SERVER_CONFIG_ACTION_HPP__
+#define __WTSS_TL_SERVER_CONFIG_ACTION_HPP__
 
-  \author Matheus Cavassan Zaglia
- */
+//wtss.tl
+#include "abstract_action.hpp"
 
-// WTSS.TL
-#include <wtss-tl/wtss.hpp>
-
-// STL
-#include <cstdlib>
-#include <QtGui>
-#include <QApplication>
-
-int main(int argc, char* argv[])
+namespace te
 {
-
-  return EXIT_SUCCESS;
-
+  namespace qt
+  {
+    namespace af
+    {
+      namespace evt
+      {
+        struct Event;
+      }
+    }
+  }
 }
+
+
+namespace wtss_tl
+{
+  class server_config_action : public abstract_action
+  {
+    Q_OBJECT
+    public:
+
+      server_config_action(QMenu* menu);
+      virtual ~server_config_action();
+
+    protected slots:
+
+      virtual void onActionActivated();
+
+    Q_SIGNALS:
+
+      void triggered(te::qt::af::evt::Event* e);
+
+  };
+}
+
+
+#endif //__WTSS_TL_SERVER_CONFIG_ACTION_HPP__

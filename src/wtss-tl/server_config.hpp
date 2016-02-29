@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2016 National Institute For Space Research (INPE) - Brazil.
 
-  This file is part of the WTSS.CXX.
+  This file is part of the WTSS.TL.
 
   WTSS.TL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 3 as
@@ -13,28 +13,28 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
-/*!
-  \file unittest/main.cpp
 
-  \brief Unit-test for WTSS.TL.
+#ifndef __WTSS_TL_SERVER_CONFIG_HPP__
+#define __WTSS_TL_SERVER_CONFIG_HPP__
 
-  \author Matheus Cavassan Zaglia
- */
+//STL
+#include <string>
+#include <vector>
 
-// WTSS.TL
-#include <wtss-tl/wtss.hpp>
+namespace wtss_tl{
 
-// STL
-#include <cstdlib>
-#include <QtGui>
-#include <QApplication>
+  struct coverage_t{
+    std::string name;
+    std::vector<std::string> attributes;
+  };
 
-int main(int argc, char* argv[])
-{
-
-  return EXIT_SUCCESS;
-
+  struct server_t{
+    std::string uri;
+    std::vector<coverage_t> coverages;
+  };
 }
+
+#endif //__WTSS_TL_SERVER_CONFIG_HPP__
