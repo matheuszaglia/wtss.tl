@@ -29,3 +29,19 @@
 
 
 #endif // __WTSS_TL_WTSS_HPP__
+
+
+namespace wtss_tl
+{
+  class wtss
+  {
+    public:
+
+    wtss();
+    ~wtss();
+
+    protected:
+
+  };
+}
+
