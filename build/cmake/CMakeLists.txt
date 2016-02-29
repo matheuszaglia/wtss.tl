@@ -71,7 +71,7 @@ if(NOT DEFINED WTSS_TL_DESTINATION_HEADERS)
 endif()
 
 if(NOT DEFINED WTSS_TL_DESTINATION_SHARE)
-  set(WTSS_TL_DESTINATION_HEADERS "${WTSS_TL_BASE_DESTINATION_DIR}share")
+  set(WTSS_TL_DESTINATION_SHARE "${WTSS_TL_BASE_DESTINATION_DIR}share")
 endif()
 
 #
@@ -136,30 +136,13 @@ include_directories(${CMAKE_BINARY_DIR})
 #find_package(Boost 1.54.0 REQUIRED system date_time chrono log timer filesystem program_options thread)
 find_package(Boost 1.54.0 REQUIRED system filesystem)
 
-if(NOT Boost_FOUND)
-  message(FATAL_ERROR "WTSS_TL: could not find required Boost libraries!")
-endif()
-
-find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Widgets )
-
-if(NOT Qt5_FOUND)
-  message(FATAL_ERROR "WTSS_TL: could not find required Qt5 libraries!")
-endif()
+find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Widgets PrintSupport)
 
 find_package(terralib REQUIRED)
 
-find_package(Qt5PrintSupport REQUIRED)
-
-find_package(wtss_cxx REQUIRED)
-
 find_package(cppnetlib REQUIRED)
 
-
-#find_package(RapidJSON REQUIRED)
-
-#find_package(OpenSSL)
-
-#find_package(Doxygen)
+find_package(wtss_cxx REQUIRED)
 
 
 #
@@ -171,6 +154,8 @@ find_package(cppnetlib REQUIRED)
 #
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${terralib_INCLUDE_DIRS})
+include_directories(${WTSS_CXX_INCLUDE_DIR})
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
