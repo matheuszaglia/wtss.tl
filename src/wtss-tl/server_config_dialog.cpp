@@ -54,7 +54,7 @@ void wtss_tl::server_config_dialog::onServerAddButtonClicked()
   if(!server.uri.empty())
   {
     std::string s_key = server.uri;
-    //wtss_cxx::wtss remote("http://dpi.inpe.br/mds");
+    wtss_cxx::wtss remote("http://dpi.inpe.br/mds");
 
     new QListWidgetItem(QString::fromStdString(server.uri),m_ui->listServer);
   }
