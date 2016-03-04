@@ -100,8 +100,7 @@ void wtss_tl::server_manager::addServer(const QString &server_uri)
     }
 
     j_object[server_uri] = j_coverages;
-    j_doc = QJsonDocument(j_object);
-
+    j_doc.setObject(j_object);
     saveConfig(j_doc);
   }
 }
@@ -115,8 +114,7 @@ void wtss_tl::server_manager::removeServer(const QString &server_uri)
     throw;
 
   j_object.remove(server_uri);
-  j_doc = QJsonDocument(j_object);
-
+  j_doc.setObject(j_object);
   saveConfig(j_doc);
 }
 
@@ -185,7 +183,7 @@ void wtss_tl::server_manager::changeStatusCoverage(const QString &server_uri, co
 
   j_server[cv_name] = j_coverage;
   j_object[server_uri] = j_server;
-
+  j_doc.setObject(j_object);
   saveConfig(j_doc);
 }
 
@@ -217,6 +215,6 @@ void wtss_tl::server_manager::changeStatusAttribute(const QString &server_uri, c
   j_coverage["attributes"] = j_attributes;
   j_server[cv_name] = j_coverage;
   j_object[server_uri] = j_server;
-
+  j_doc.setObject(j_object);
   saveConfig(j_doc);
 }

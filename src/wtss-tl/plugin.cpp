@@ -27,14 +27,19 @@
 
 //wtss
 #include "plugin.hpp"
-// STL
+
+
+// Terralib
 #include <terralib/qt/af/ApplicationController.h>
 #include <terralib/qt/af/events/ApplicationEvents.h>
-#include <iostream>
+
 
 //wtss.tl
-#include "wtss.hpp"
+#include "server_manager.hpp"
 #include "server_config_action.hpp"
+#include "time_series_action.hpp"
+
+#include "server_config_dialog.hpp"
 
 
 wtss_tl::Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo) :
@@ -56,11 +61,19 @@ void wtss_tl::Plugin::startup()
   m_initialized = true;
 
   {
-
     m_wtssMenu = te::qt::af::AppCtrlSingleton::getInstance().getMenu("Tools");
 
-    registerActions();
+    m_wtssToolBar = new QToolBar;
+    m_wtssToolBar->setObjectName("WTSS Toolbar");
+    te::qt::af::AppCtrlSingleton::getInstance().addToolBar("WTSSToolbar", m_wtssToolBar);
 
+    m_actionQuery = new QAction(m_wtssToolBar);
+    m_actionQuery->setText("Show Time Series");
+    m_actionQuery->setIcon(QIcon::fromTheme("sa-spatialanalysis-icon"));
+    m_actionQuery->setObjectName("Tools.wtss_query");
+    m_actionQuery->setCheckable(true);
+    m_wtssToolBar->addAction(m_actionQuery);
+    registerActions();
   }
 
 }
@@ -69,20 +82,38 @@ void wtss_tl::Plugin::shutdown()
 {
   if(!m_initialized)
     return;
+  m_initialized = false;  
 
-  m_initialized = false;
+  te::qt::af::AppCtrlSingleton::getInstance().removeToolBar("WTSSToolbar");
 }
 
 void wtss_tl::Plugin::registerActions()
 {
-  m_serverAction = new server_config_action(m_wtssMenu);
-  connect(m_serverAction, SIGNAL(triggered(te::qt::af::evt::Event*)), SIGNAL(triggered(te::qt::af::evt::Event*)));
+  m_serverAction = new QAction(m_wtssMenu);
+  m_serverAction->setText("Web Time Series Services...");
+  m_serverAction->setIcon(QIcon::fromTheme("chart-time-series"));
+  connect(m_serverAction, SIGNAL(triggered()), this, SLOT(onServerActionActivated()));
+  m_wtssMenu->addAction(m_serverAction);
+
+  m_timeSeriesAction = new time_series_action(m_wtssToolBar);
+  connect(m_timeSeriesAction, SIGNAL(toggled(bool)), this, SLOT(onActionQueryToggled(bool)));
 }
 
 void wtss_tl::Plugin::unregisterActions()
 {
 
 }
+
+void wtss_tl::Plugin::onServerActionActivated()
+{
+  QWidget* parent = te::qt::af::AppCtrlSingleton::getInstance().getMainWindow();
+  wtss_tl::server_config_dialog dialog(parent);
+
+  if(dialog.exec() != QDialog::Accepted)
+    return;
+
+}
+
 
 PLUGIN_CALL_BACK_IMPL(wtss_tl::Plugin)
 

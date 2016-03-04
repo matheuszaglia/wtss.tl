@@ -17,8 +17,8 @@
  */
 
 
-#ifndef __WTSS_TL_SERVER_CONFIG_DIALOG_HPP__
-#define __WTSS_TL_SERVER_CONFIG_DIALOG_HPP__
+#ifndef __WTSS_TL_TIME_SERIES_DIALOG_HPP__
+#define __WTSS_TL_TIME_SERIES_DIALOG_HPP__
 
 // STL
 #include <memory>
@@ -30,36 +30,27 @@
 #include <QListWidgetItem>
 //wtss.tl
 
-#include <wtss-cxx/data_types.hpp>
-
-namespace Ui { class server_config_dialog_form; }
+namespace Ui { class time_series_dialog_form; }
 
 namespace wtss_tl{
-  class server_config_dialog : public QDialog
+  class time_series_dialog : public QDialog
   {
     Q_OBJECT
 
     public:
 
-    server_config_dialog(QWidget* parent = 0, Qt::WindowFlags f = 0);
+    time_series_dialog(QWidget* parent = 0, Qt::WindowFlags f = 0);
 
-    ~server_config_dialog();
+    ~time_series_dialog();
 
     protected slots:
 
-      void onServerAddButtonClicked();
 
-      void onServerRemoveButtonClicked();
-
-      void onListServerItemSelected();
-
-      void onListCoverageChecked(QListWidgetItem *item);
   private:
 
-      std::auto_ptr<Ui::server_config_dialog_form> m_ui;
-      QString server_uri;
-      QJsonObject j_config;
+      std::auto_ptr<Ui::time_series_dialog_form> m_ui;
+
   };
 }
 
-#endif //__WTSS_TL_SERVER_CONFIG_DIALOG_HPP__
+#endif //__WTSS_TL_TIME_SERIES_DIALOG_HPP__

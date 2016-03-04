@@ -169,7 +169,8 @@ add_library(terralib_mod_qt_wtss_plugin SHARED ${WTSS_TL_SRC_FILES} ${WTSS_TL_HD
 
 target_link_libraries(terralib_mod_qt_wtss_plugin  wtss_cxx_client
                                                    terralib_mod_plugin
-                                                   terralib_mod_qt_apf)
+                                                   terralib_mod_qt_apf
+                                                   ${Boost_ALGORITHM_LIBRARY})
 
 qt5_use_modules(terralib_mod_qt_wtss_plugin Core Gui Widgets)
 

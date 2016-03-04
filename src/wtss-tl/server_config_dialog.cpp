@@ -27,6 +27,12 @@
 //wtss.cxx
 #include <wtss-cxx/wtss.hpp>
 
+//wtss.tl
+#include "server_manager.hpp"
+
+//boost
+#include <boost/algorithm/string/join.hpp>
+
 wtss_tl::server_config_dialog::server_config_dialog(QWidget *parent, Qt::WindowFlags f):
 QDialog(parent, f),
 m_ui(new Ui::server_config_dialog_form)
@@ -34,10 +40,17 @@ m_ui(new Ui::server_config_dialog_form)
   m_ui->setupUi(this);
   this->setWindowTitle(tr("Web Time Series Servers"));
 
+  QJsonDocument j_doc = wtss_tl::server_manager::getInstance().loadConfig();
+  j_config = j_doc.object();
+  if(j_config.keys().size() > 0)
+    m_ui->listServer->addItems(j_config.keys());
+
   connect(m_ui->btnAddServer, SIGNAL(clicked()),this,SLOT(onServerAddButtonClicked()));
   connect(m_ui->btnRemoveServer, SIGNAL(clicked()),this,SLOT(onServerRemoveButtonClicked()));
   connect(m_ui->listServer,SIGNAL(itemSelectionChanged()),SLOT(onListServerItemSelected()));
+  connect(m_ui->listCoverages,SIGNAL(itemChanged(QListWidgetItem*)),SLOT(onListCoverageChecked(QListWidgetItem*)));
 }
+
 
 wtss_tl::server_config_dialog::~server_config_dialog()
 {
@@ -46,17 +59,17 @@ wtss_tl::server_config_dialog::~server_config_dialog()
 
 void wtss_tl::server_config_dialog::onServerAddButtonClicked()
 {
-  server_t server;
+
   QInputDialog* inputDialog = new QInputDialog();
   inputDialog->setOptions(QInputDialog::NoButtons);
   bool ok;
-  server.uri = inputDialog->getText(NULL,"Add Server","Server URI:",QLineEdit::Normal,"", &ok).toStdString();
-  if(!server.uri.empty())
+  QString uri = inputDialog->getText(NULL,"Add Server","Server URI:",QLineEdit::Normal,"", &ok);
+  if(!uri.isEmpty())
   {
-    std::string s_key = server.uri;
-    wtss_cxx::wtss remote("http://dpi.inpe.br/mds");
-
-    new QListWidgetItem(QString::fromStdString(server.uri),m_ui->listServer);
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    wtss_tl::server_manager::getInstance().addServer(uri);
+    QApplication::restoreOverrideCursor();
+    m_ui->listServer->addItem(uri);
   }
 }
 
@@ -70,8 +83,10 @@ void wtss_tl::server_config_dialog::onServerRemoveButtonClicked()
                                     QMessageBox::Yes|QMessageBox::No);
       if (reply == QMessageBox::Yes)
       {
-//        servers.erase(m_ui->listServer->currentItem()->text().toStdString());
+        wtss_tl::server_manager::getInstance().removeServer(m_ui->listServer->currentItem()->text());
         delete m_ui->listServer->currentItem();
+        m_ui->listCoverages->clear();
+        m_ui->listAttributes->clear();
       }
   }
 
@@ -81,10 +96,43 @@ void wtss_tl::server_config_dialog::onListServerItemSelected()
 {
   if(m_ui->listServer->selectedItems().length() > 0)
   {
-    std::string server_uri = m_ui->listServer->currentItem()->text().toStdString();
-
-//    QListWidgetItem* item = new QListWidgetItem("item", listWidget);
-//    item->setFlags(item->flags() | Qt::ItemIsUserCheckable); // set checkable flag
-//    item->setCheckState(Qt::Unchecked); // AND initialize check state
+    m_ui->listCoverages->clear();
+    m_ui->listAttributes->clear();
+    server_uri = m_ui->listServer->currentItem()->text();
+    QJsonObject j_coverages = j_config.find(server_uri).value().toObject();
+    QJsonObject::iterator it;
+    for(it = j_coverages.begin(); it != j_coverages.end(); it++)
+    {
+      QString coverage = it.key();
+      QJsonObject j_coverage = it.value().toObject();
+      QListWidgetItem* c = new QListWidgetItem(coverage, m_ui->listCoverages);
+      c->setFlags(c->flags() | Qt::ItemIsUserCheckable); // set checkable flag
+      if(j_coverage["active"].toBool())
+      {
+        c->setCheckState(Qt::Checked);
+        QJsonObject::iterator it_at;
+        QJsonObject j_attributes = j_coverage.find("attributes").value().toObject();
+        for(it_at = j_attributes.begin(); it_at != j_attributes.end(); it_at++)
+        {
+            QString attribute = it_at.key();
+            bool active = it_at.value().toBool();
+            QListWidgetItem* a = new QListWidgetItem(attribute, m_ui->listAttributes);
+            a->setFlags(a->flags() | Qt::ItemIsUserCheckable);
+            if(active)
+              a->setCheckState(Qt::Checked);
+            else
+              a->setCheckState(Qt::Unchecked);
+        }
+      }
+      else
+        c->setCheckState(Qt::Unchecked);
+    }
   }
 }
+
+void wtss_tl::server_config_dialog::onListCoverageChecked(QListWidgetItem* item)
+{
+  wtss_tl::server_manager::getInstance().changeStatusCoverage(server_uri, item->text());
+}
+
+

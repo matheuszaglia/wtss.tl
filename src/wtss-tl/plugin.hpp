@@ -12,13 +12,12 @@
 #include <QObject>
 #include <QAction>
 #include <QMenu>
+#include <QToolBar>
 
 //STL
 #include <vector>
-
-//wtss.tl
-#include "server_config.hpp"
-
+#include "time_series_action.hpp"
+#include "server_config_action.hpp"
 
 namespace te
 {
@@ -35,7 +34,7 @@ namespace te
 }
 
 namespace wtss_tl{
-  class server_config_action;
+
   class Plugin : public QObject, public te::plugin::Plugin
   {
     Q_OBJECT
@@ -63,11 +62,14 @@ namespace wtss_tl{
     protected:
 
       QAction* m_actionManageServers;
+      QAction* m_actionQuery;
       QMenu* m_wtssMenu;
+      QToolBar* m_wtssToolBar;
+      QAction* m_serverAction;
+      time_series_action* m_timeSeriesAction;
 
-      server_config_action* m_serverAction;
-
-      std::vector<server_t> servers;
+  protected slots:
+      void onServerActionActivated();
   };
 
 }
