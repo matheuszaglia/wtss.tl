@@ -82,11 +82,15 @@
    <item row="1" column="1">
     <widget class="QGroupBox" name="groupAttributes">
      <property name="title">
-      <string>Atributes</string>
+      <string>Attributes</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_5">
       <item row="0" column="0">
-       <widget class="QListWidget" name="listAttributes"/>
+       <widget class="QListWidget" name="listAttributes">
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -98,13 +102,25 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
-       <widget class="QListWidget" name="listCoverages"/>
+       <widget class="QListWidget" name="listCoverages">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>listServer</tabstop>
+  <tabstop>btnAddServer</tabstop>
+  <tabstop>btnRemoveServer</tabstop>
+  <tabstop>listCoverages</tabstop>
+  <tabstop>listAttributes</tabstop>
+  <tabstop>btnOk</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

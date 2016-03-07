@@ -17,13 +17,15 @@
  */
 
 
-#ifndef __WTSS_TL_SERVER_CONFIG_ACTION_HPP__
-#define __WTSS_TL_SERVER_CONFIG_ACTION_HPP__
+#ifndef __WTSS_TL_TIME_SERIES_ACTION_HPP__
+#define __WTSS_TL_TIME_SERIES_ACTION_HPP__
 
 //QT
-#include <QMenu>
 #include <QAction>
+#include <QToolBar>
 #include <QObject>
+
+#include <string>
 
 namespace te
 {
@@ -42,21 +44,20 @@ namespace te
 
 namespace wtss_tl
 {
-  class server_config_action : public QObject
+  class time_series_action : public QObject
   {
     Q_OBJECT
     public:
 
-      server_config_action(QMenu* menu);
-      ~server_config_action();
+      time_series_action(QToolBar* toolbar);
+      virtual ~time_series_action();
+
+    protected:
+      void createAction(std::string name, std::string pixmap);
 
     protected slots:
 
-      void onActionActivated();
-
-    protected:
-
-      void createAction(std::string name, std::string pixmap = "");
+      virtual void onActionToggled(bool checked);
 
     Q_SIGNALS:
 
@@ -64,11 +65,11 @@ namespace wtss_tl
 
     protected:
 
-      QMenu* m_menu;        //!< Parent Menu.
-      QAction* m_action;    //!< Action used to call the process.
+      QToolBar* m_toolBar;
+      QAction* m_action;
 
   };
 }
 
 
-#endif //__WTSS_TL_SERVER_CONFIG_ACTION_HPP__
+#endif //__WTSS_TL_TIME_SERIES_ACTION_HPP__

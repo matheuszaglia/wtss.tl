@@ -15,26 +15,37 @@
   You should have received a copy of the GNU Lesser General Public License along
   with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
+//wtss.tl
+#include "time_series_dialog.hpp"
+#include "ui_time_series_dialog_form.h"
+//QT
+#include <QInputDialog>
+#include <QMessageBox>
 
+#include <iostream>
 
-#ifndef __WTSS_TL_SERVER_CONFIG_HPP__
-#define __WTSS_TL_SERVER_CONFIG_HPP__
+//wtss.cxx
+#include <wtss-cxx/wtss.hpp>
 
-//STL
-#include <string>
-#include <vector>
+//wtss.tl
+#include "server_manager.hpp"
 
-namespace wtss_tl{
+//boost
+#include <boost/algorithm/string/join.hpp>
 
-  struct coverage_t{
-    std::string name;
-    std::vector<std::string> attributes;
-  };
+wtss_tl::time_series_dialog::time_series_dialog(QWidget *parent, Qt::WindowFlags f):
+QDialog(parent, f),
+m_ui(new Ui::time_series_dialog_form)
+{
+  m_ui->setupUi(this);
+  this->setWindowTitle(tr("Web Time Series Service"));
 
-  struct server_t{
-    std::string uri;
-    std::vector<coverage_t> coverages;
-  };
 }
 
-#endif //__WTSS_TL_SERVER_CONFIG_HPP__
+
+wtss_tl::time_series_dialog::~time_series_dialog()
+{
+
+}
+
+
