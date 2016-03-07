@@ -32,14 +32,13 @@
 // Terralib
 #include <terralib/qt/af/ApplicationController.h>
 #include <terralib/qt/af/events/ApplicationEvents.h>
-
+#include <terralib/qt/af/events/MapEvents.h>
+#include <terralib/qt/widgets/canvas/MapDisplay.h>
 
 //wtss.tl
 #include "server_manager.hpp"
-#include "server_config_action.hpp"
-#include "time_series_action.hpp"
-
 #include "server_config_dialog.hpp"
+#include "time_series_tool.hpp"
 
 
 wtss_tl::Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo) :
@@ -61,18 +60,34 @@ void wtss_tl::Plugin::startup()
   m_initialized = true;
 
   {
-    m_wtssMenu = te::qt::af::AppCtrlSingleton::getInstance().getMenu("Tools");
+
+    m_menu = te::qt::af::AppCtrlSingleton::getInstance().getMenu("Tools");
+    m_wtssMenu = new QMenu(m_menu);
+    m_wtssMenu->setTitle("Web Time Series Services");
+    m_wtssMenu->setIcon(QIcon::fromTheme("chart-time-series"));
+    m_wtssMenu->setObjectName("Tools.WTSS");
+
+    QAction* pluginsSeparator = te::qt::af::AppCtrlSingleton::getInstance().findAction("ManagePluginsSeparator");
+    m_menu->insertMenu(pluginsSeparator, m_wtssMenu);
+
+    m_actionManageServices = new QAction(m_wtssMenu);
+    m_actionManageServices->setText("Manage Services...");
+    m_actionManageServices->setObjectName("Tools.WTSS.ManageServices");
+    m_actionManageServices->setIcon(QIcon::fromTheme("view-datasource-explorer"));
+    m_wtssMenu->addAction(m_actionManageServices);
+
+    m_timeSeriesAction = new QAction(m_wtssMenu);
+    m_timeSeriesAction->setText("Query Time Series...");
+    m_timeSeriesAction->setObjectName("Tools.WTSS.Query");
+    m_timeSeriesAction->setCheckable(true);
+    m_timeSeriesAction->setIcon(QIcon::fromTheme("chart-time-series"));
 
     m_wtssToolBar = new QToolBar;
     m_wtssToolBar->setObjectName("WTSS Toolbar");
     te::qt::af::AppCtrlSingleton::getInstance().addToolBar("WTSSToolbar", m_wtssToolBar);
+    m_wtssToolBar->addAction(m_actionManageServices);
+    m_wtssToolBar->addAction(m_timeSeriesAction);
 
-    m_actionQuery = new QAction(m_wtssToolBar);
-    m_actionQuery->setText("Show Time Series");
-    m_actionQuery->setIcon(QIcon::fromTheme("sa-spatialanalysis-icon"));
-    m_actionQuery->setObjectName("Tools.wtss_query");
-    m_actionQuery->setCheckable(true);
-    m_wtssToolBar->addAction(m_actionQuery);
     registerActions();
   }
 
@@ -89,14 +104,10 @@ void wtss_tl::Plugin::shutdown()
 
 void wtss_tl::Plugin::registerActions()
 {
-  m_serverAction = new QAction(m_wtssMenu);
-  m_serverAction->setText("Web Time Series Services...");
-  m_serverAction->setIcon(QIcon::fromTheme("chart-time-series"));
-  connect(m_serverAction, SIGNAL(triggered()), this, SLOT(onServerActionActivated()));
-  m_wtssMenu->addAction(m_serverAction);
 
-  m_timeSeriesAction = new time_series_action(m_wtssToolBar);
+  connect(m_actionManageServices, SIGNAL(triggered()), this, SLOT(onServerActionActivated()));
   connect(m_timeSeriesAction, SIGNAL(toggled(bool)), this, SLOT(onActionQueryToggled(bool)));
+
 }
 
 void wtss_tl::Plugin::unregisterActions()
@@ -111,7 +122,20 @@ void wtss_tl::Plugin::onServerActionActivated()
 
   if(dialog.exec() != QDialog::Accepted)
     return;
+}
 
+
+void wtss_tl::Plugin::onActionQueryToggled(bool checked)
+{
+  if(!checked)
+    return;
+
+  te::qt::af::evt::GetMapDisplay e;
+  if (e.m_display)
+  {
+    wtss_tl::time_series_tool* tool = new wtss_tl::time_series_tool(e.m_display->getDisplay());
+    e.m_display->setCurrentTool(tool);
+  }
 }
 
 

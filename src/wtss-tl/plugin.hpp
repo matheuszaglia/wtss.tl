@@ -16,9 +16,6 @@
 
 //STL
 #include <vector>
-#include "time_series_action.hpp"
-#include "server_config_action.hpp"
-
 namespace te
 {
   namespace qt
@@ -61,15 +58,16 @@ namespace wtss_tl{
 
     protected:
 
-      QAction* m_actionManageServers;
+      QAction* m_actionManageServices;
       QAction* m_actionQuery;
+      QMenu* m_menu;
       QMenu* m_wtssMenu;
       QToolBar* m_wtssToolBar;
-      QAction* m_serverAction;
-      time_series_action* m_timeSeriesAction;
+      QAction* m_timeSeriesAction;
 
-  protected slots:
+    protected slots:
       void onServerActionActivated();
+      void onActionQueryToggled(bool checked);
   };
 
 }
