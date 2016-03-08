@@ -17,9 +17,9 @@
  */
 
 /*!
-  \file wtss-tl/server_manager.hpp
+  \file wtss-tl/services_manager.hpp
 
-  \brief Brief.
+  \brief Manage the JSON file for services configuration of the Web Time Series Services plugin.
 
   \author Matheus Cavassan Zaglia
  */
@@ -27,31 +27,30 @@
 #ifndef __WTSS_TL_WTSS_HPP__
 #define __WTSS_TL_WTSS_HPP__
 
-
-#endif // __WTSS_TL_WTSS_HPP__
 //STL
 #include <string>
+
 //QT
 #include <QJsonDocument>
 
 namespace wtss_tl
 {
-  class server_manager
+  class services_manager
   {
     public:
 
-    static server_manager& getInstance()
+    static services_manager& getInstance()
     {
-      static server_manager instance;
+      static services_manager instance;
       return instance;
     }
 
-    server_manager(server_manager const&)  = delete;
-    void operator=(server_manager const&)  = delete;
+    services_manager(services_manager const&)  = delete;
+    void operator=(services_manager const&)  = delete;
 
     private:
 
-      server_manager(){};
+      services_manager(){}
 
       void saveConfig(QJsonDocument j_doc);
 
@@ -67,9 +66,6 @@ namespace wtss_tl
 
       void changeStatusCoverage(const QString &server_uri, const QString &cv_name);
       void changeStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute);
-
-
-
   };
 }
-
+#endif // __WTSS_TL_WTSS_HPP__

@@ -13,21 +13,30 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
-//wtss.tl
-#include "time_series_dialog.hpp"
-#include "ui_time_series_dialog_form.h"
-//QT
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QString>
+
+/*!
+  \file wtss-tl/time_series_dialog.cpp
+
+  \brief Time series query dialog for Web Time Series Services plugin.
+
+  \author Matheus Cavassan Zaglia
+ */
 
 //wtss.cxx
 #include <wtss-cxx/wtss.hpp>
 
+
 //wtss.tl
-#include "server_manager.hpp"
+#include "time_series_dialog.hpp"
+#include "ui_time_series_dialog_form.h"
+#include "services_manager.hpp"
+
+//QT
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QString>
 
 //boost
 #include <boost/algorithm/string/join.hpp>

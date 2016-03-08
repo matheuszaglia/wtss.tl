@@ -16,6 +16,13 @@
   with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
+/*!
+  \file wtss-tl/server_config_dialog.hpp
+
+  \brief Configuration dialog for Web Time Series Services plugin.
+
+  \author Matheus Cavassan Zaglia
+ */
 
 #ifndef __WTSS_TL_SERVER_CONFIG_DIALOG_HPP__
 #define __WTSS_TL_SERVER_CONFIG_DIALOG_HPP__
@@ -23,13 +30,14 @@
 // STL
 #include <memory>
 #include <string>
+
 //QT
 #include <QDialog>
 #include <QObject>
 #include <QtGui>
 #include <QListWidgetItem>
-//wtss.tl
 
+//wtss.cxx
 #include <wtss-cxx/data_types.hpp>
 
 namespace Ui { class server_config_dialog_form; }
@@ -54,6 +62,7 @@ namespace wtss_tl{
       void onListServerItemSelected();
 
       void onListCoverageChecked(QListWidgetItem *item);
+
     private:
 
       std::auto_ptr<Ui::server_config_dialog_form> m_ui;

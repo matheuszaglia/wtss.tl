@@ -17,17 +17,18 @@
  */
 
 /*!
-  \file wtss-tl/wtss/plugin.cpp
+  \file wtss-tl/plugin.cpp
 
   \brief Add a plugin interface for dynamic loading of the Web Time Series Data Service plugin.
 
-  \author Gilberto Ribeiro de Queiroz
   \author Matheus Cavassan Zaglia
  */
 
 //wtss
 #include "plugin.hpp"
 
+//QT
+#include <QApplication>
 
 // Terralib
 #include <terralib/qt/af/ApplicationController.h>
@@ -36,7 +37,7 @@
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
 
 //wtss.tl
-#include "server_manager.hpp"
+#include "services_manager.hpp"
 #include "server_config_dialog.hpp"
 #include "time_series_tool.hpp"
 
@@ -72,20 +73,20 @@ void wtss_tl::Plugin::startup()
 
     m_actionManageServices = new QAction(m_wtssMenu);
     m_actionManageServices->setText("Manage Services...");
-    m_actionManageServices->setObjectName("Tools.WTSS.ManageServices");
-    m_actionManageServices->setIcon(QIcon::fromTheme("view-datasource-explorer"));
+    m_actionManageServices->setObjectName("Tools.WTSS.Manage Web Time Series Services");
+    m_actionManageServices->setIcon(QIcon::fromTheme("preferences-system"));
     m_wtssMenu->addAction(m_actionManageServices);
 
     m_timeSeriesAction = new QAction(m_wtssMenu);
     m_timeSeriesAction->setText("Query Time Series...");
-    m_timeSeriesAction->setObjectName("Tools.WTSS.Query");
+    m_timeSeriesAction->setObjectName("Tools.WTSS.Query Time Series");
     m_timeSeriesAction->setCheckable(true);
     m_timeSeriesAction->setIcon(QIcon::fromTheme("chart-time-series"));
+    m_wtssMenu->addAction(m_timeSeriesAction);
 
     m_wtssToolBar = new QToolBar;
     m_wtssToolBar->setObjectName("WTSS Toolbar");
     te::qt::af::AppCtrlSingleton::getInstance().addToolBar("WTSSToolbar", m_wtssToolBar);
-    m_wtssToolBar->addAction(m_actionManageServices);
     m_wtssToolBar->addAction(m_timeSeriesAction);
 
     registerActions();
@@ -127,7 +128,6 @@ void wtss_tl::Plugin::onActionQueryToggled(bool checked)
 {
   if(!checked)
     return;
-
   te::qt::af::evt::GetMapDisplay e;
 
   emit triggered(&e);

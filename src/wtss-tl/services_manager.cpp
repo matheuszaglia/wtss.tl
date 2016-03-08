@@ -17,9 +17,9 @@
  */
 
 /*!
-  \file wtss-tl/server_manager.cpp
+  \file wtss-tl/services_manager.cpp
 
-  \brief Brief.
+  \brief Manage the JSON file for services configuration of the Web Time Series Services plugin.
 
   \author Matheus Cavassan Zaglia
  */
@@ -29,7 +29,7 @@
 #include <terralib/qt/af/ApplicationController.h>
 
 // WTSS.TL
-#include "server_manager.hpp"
+#include "services_manager.hpp"
 
 // WTSS.CXX
 #include <wtss-cxx/wtss.hpp>
@@ -48,7 +48,7 @@
 
 // EXCEPTIONS TO DO
 
-QJsonDocument wtss_tl::server_manager::loadConfig()
+QJsonDocument wtss_tl::services_manager::loadConfig()
 {
   QString path = te::qt::af::AppCtrlSingleton::getInstance().getUserDataDir()+"/wtss_tl_settings.json";
   QFile f(path);
@@ -60,7 +60,7 @@ QJsonDocument wtss_tl::server_manager::loadConfig()
   return j_doc;
 }
 
-void wtss_tl::server_manager::saveConfig(QJsonDocument j_doc)
+void wtss_tl::services_manager::saveConfig(QJsonDocument j_doc)
 {
   QString path = te::qt::af::AppCtrlSingleton::getInstance().getUserDataDir()+"/wtss_tl_settings.json";
   QFile f(path);
@@ -71,7 +71,7 @@ void wtss_tl::server_manager::saveConfig(QJsonDocument j_doc)
 }
 
 
-void wtss_tl::server_manager::addServer(const QString &server_uri)
+void wtss_tl::services_manager::addServer(const QString &server_uri)
 {
   QJsonDocument j_doc = loadConfig();
   QJsonObject j_object = j_doc.object();
@@ -105,7 +105,7 @@ void wtss_tl::server_manager::addServer(const QString &server_uri)
   }
 }
 
-void wtss_tl::server_manager::removeServer(const QString &server_uri)
+void wtss_tl::services_manager::removeServer(const QString &server_uri)
 {
   QJsonDocument j_doc = loadConfig();
   QJsonObject j_object = j_doc.object();
@@ -118,7 +118,7 @@ void wtss_tl::server_manager::removeServer(const QString &server_uri)
   saveConfig(j_doc);
 }
 
-bool wtss_tl::server_manager::getStatusCoverage(const QString &server_uri, const QString &cv_name)
+bool wtss_tl::services_manager::getStatusCoverage(const QString &server_uri, const QString &cv_name)
 {
   QJsonDocument j_doc = loadConfig();
 
@@ -137,7 +137,7 @@ bool wtss_tl::server_manager::getStatusCoverage(const QString &server_uri, const
   return j_coverage["active"].toBool();
 }
 
-bool wtss_tl::server_manager::getStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute)
+bool wtss_tl::services_manager::getStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute)
 {
   QJsonDocument j_doc = loadConfig();
 
@@ -160,7 +160,7 @@ bool wtss_tl::server_manager::getStatusAttribute(const QString &server_uri, cons
   return j_attributes[attribute].toBool();
 }
 
-void wtss_tl::server_manager::changeStatusCoverage(const QString &server_uri, const QString &cv_name)
+void wtss_tl::services_manager::changeStatusCoverage(const QString &server_uri, const QString &cv_name)
 {
   QJsonDocument j_doc = loadConfig();
 
@@ -187,7 +187,7 @@ void wtss_tl::server_manager::changeStatusCoverage(const QString &server_uri, co
   saveConfig(j_doc);
 }
 
-void wtss_tl::server_manager::changeStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute)
+void wtss_tl::services_manager::changeStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute)
 {
   QJsonDocument j_doc = loadConfig();
 

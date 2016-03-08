@@ -36,14 +36,14 @@
          <item row="1" column="0">
           <widget class="QPushButton" name="btnRemoveServer">
            <property name="text">
-            <string>Remove</string>
+            <string/>
            </property>
           </widget>
          </item>
          <item row="0" column="0">
           <widget class="QPushButton" name="btnAddServer">
            <property name="text">
-            <string>Add</string>
+            <string/>
            </property>
           </widget>
          </item>
