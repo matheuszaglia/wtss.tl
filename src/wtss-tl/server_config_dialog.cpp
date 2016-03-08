@@ -38,7 +38,7 @@ QDialog(parent, f),
 m_ui(new Ui::server_config_dialog_form)
 {
   m_ui->setupUi(this);
-  this->setWindowTitle(tr("Web Time Series Services"));
+  this->setWindowTitle(tr("Web Time Series Services - Settings"));
 
   QJsonDocument j_doc = wtss_tl::server_manager::getInstance().loadConfig();
   j_config = j_doc.object();

@@ -41,9 +41,9 @@ namespace wtss_tl{
 
     public:
 
-    server_config_dialog(QWidget* parent = 0, Qt::WindowFlags f = 0);
+      server_config_dialog(QWidget* parent = 0, Qt::WindowFlags f = 0);
 
-    ~server_config_dialog();
+      ~server_config_dialog();
 
     protected slots:
 
@@ -54,7 +54,7 @@ namespace wtss_tl{
       void onListServerItemSelected();
 
       void onListCoverageChecked(QListWidgetItem *item);
-  private:
+    private:
 
       std::auto_ptr<Ui::server_config_dialog_form> m_ui;
       QString server_uri;

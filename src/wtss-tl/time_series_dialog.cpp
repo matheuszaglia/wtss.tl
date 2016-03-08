@@ -21,8 +21,7 @@
 //QT
 #include <QInputDialog>
 #include <QMessageBox>
-
-#include <iostream>
+#include <QString>
 
 //wtss.cxx
 #include <wtss-cxx/wtss.hpp>
@@ -33,13 +32,15 @@
 //boost
 #include <boost/algorithm/string/join.hpp>
 
-wtss_tl::time_series_dialog::time_series_dialog(QWidget *parent, Qt::WindowFlags f):
+wtss_tl::time_series_dialog::time_series_dialog(wtss_cxx::timeseries_query_t query, QWidget *parent, Qt::WindowFlags f):
 QDialog(parent, f),
+query(query),
 m_ui(new Ui::time_series_dialog_form)
 {
   m_ui->setupUi(this);
-  this->setWindowTitle(tr("Web Time Series Service"));
-
+  this->setWindowTitle(tr("Web Time Series Service - Query"));
+  m_ui->txtLongitude->setText(QString::number(query.longitude));
+  m_ui->txtLatitude->setText(QString::number(query.latitude));
 }
 
 

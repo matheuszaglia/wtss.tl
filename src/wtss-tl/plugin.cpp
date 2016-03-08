@@ -97,17 +97,15 @@ void wtss_tl::Plugin::shutdown()
 {
   if(!m_initialized)
     return;
-  m_initialized = false;  
+  m_initialized = false;
 
   te::qt::af::AppCtrlSingleton::getInstance().removeToolBar("WTSSToolbar");
 }
 
 void wtss_tl::Plugin::registerActions()
 {
-
   connect(m_actionManageServices, SIGNAL(triggered()), this, SLOT(onServerActionActivated()));
   connect(m_timeSeriesAction, SIGNAL(toggled(bool)), this, SLOT(onActionQueryToggled(bool)));
-
 }
 
 void wtss_tl::Plugin::unregisterActions()
@@ -131,6 +129,9 @@ void wtss_tl::Plugin::onActionQueryToggled(bool checked)
     return;
 
   te::qt::af::evt::GetMapDisplay e;
+
+  emit triggered(&e);
+
   if (e.m_display)
   {
     wtss_tl::time_series_tool* tool = new wtss_tl::time_series_tool(e.m_display->getDisplay());

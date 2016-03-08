@@ -5,7 +5,6 @@
 #include "time_series_dialog.hpp"
 //wtss.cxx
 #include <wtss-cxx/wtss.hpp>
-
 //TerraLib
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
 
@@ -36,8 +35,15 @@ bool wtss_tl::time_series_tool::mouseReleaseEvent(QMouseEvent *e)
   converter->convert(coordPoint.x(), coordPoint.y(), c.x, c.y);
 
   QWidget* m_parent = new QWidget(0);
-  wtss_tl::time_series_dialog* dialog = new wtss_tl::time_series_dialog(m_parent);
-  dialog->show();
+  wtss_cxx::timeseries_query_t query;
+  query.longitude = c.x;
+  query.latitude  = c.y;
+
+  wtss_tl::time_series_dialog dialog(query,m_parent);
+
+
+  if(dialog.exec() != QDialog::Accepted)
+    return true;
 
   return true;
 }

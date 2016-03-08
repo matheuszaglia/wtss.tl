@@ -23,6 +23,7 @@
 // STL
 #include <memory>
 #include <string>
+
 //QT
 #include <QDialog>
 #include <QObject>
@@ -30,25 +31,34 @@
 #include <QListWidgetItem>
 //wtss.tl
 
+//wtss.cxx
+#include <wtss-cxx/data_types.hpp>
+
+
 namespace Ui { class time_series_dialog_form; }
 
 namespace wtss_tl{
+
+
   class time_series_dialog : public QDialog
   {
     Q_OBJECT
 
     public:
 
-    time_series_dialog(QWidget* parent = 0, Qt::WindowFlags f = 0);
+      time_series_dialog(wtss_cxx::timeseries_query_t query, QWidget* parent = 0, Qt::WindowFlags f = 0);
 
-    ~time_series_dialog();
+     ~time_series_dialog();
 
     protected slots:
 
+    public:
 
-  private:
+      wtss_cxx::timeseries_query_t query;
 
-      std::auto_ptr<Ui::time_series_dialog_form> m_ui;
+    private:
+
+     std::auto_ptr<Ui::time_series_dialog_form> m_ui;
 
   };
 }
