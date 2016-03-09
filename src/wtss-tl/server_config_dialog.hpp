@@ -59,15 +59,19 @@ namespace wtss_tl{
 
       void onServerRemoveButtonClicked();
 
-      void onListServerItemSelected();
+      void onComboServerSelected();
 
-      void onListCoverageChecked(QListWidgetItem *item);
+      void onComboCoverageChanged(QString coverage);
 
+      void onListAtrributesChecked(QListWidgetItem* item);
     private:
 
+      bool dirty;
       std::auto_ptr<Ui::server_config_dialog_form> m_ui;
-      QString server_uri;
+
       QJsonObject j_config;
+      QString server_uri;
+      QString coverage;
   };
 }
 

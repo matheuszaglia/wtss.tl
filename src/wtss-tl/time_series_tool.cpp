@@ -72,5 +72,5 @@ bool wtss_tl::time_series_tool::mouseReleaseEvent(QMouseEvent *e)
   if(dialog.exec() != QDialog::Accepted)
     return true;
 
-  return true;
+  return false;
 }

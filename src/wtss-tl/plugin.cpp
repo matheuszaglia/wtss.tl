@@ -126,11 +126,14 @@ void wtss_tl::Plugin::onServerActionActivated()
 
 void wtss_tl::Plugin::onActionQueryToggled(bool checked)
 {
-  if(!checked)
-    return;
   te::qt::af::evt::GetMapDisplay e;
-
   emit triggered(&e);
+
+  if(!checked && e.m_display)
+  {
+    e.m_display->setCurrentTool(0);
+    return;
+  }
 
   if (e.m_display)
   {
