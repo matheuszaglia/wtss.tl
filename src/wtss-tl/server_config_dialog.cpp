@@ -137,7 +137,6 @@ void wtss_tl::server_config_dialog::onComboServerSelected()
         }
       }
     }
-
     dirty = true;
   }
 }
@@ -146,35 +145,36 @@ void wtss_tl::server_config_dialog::onComboCoverageChanged(QString coverage)
 {
   if(dirty)
   {
-    m_ui->listAttributes->clear();
-    j_config = wtss_tl::services_manager::getInstance().loadConfig().object();
-    QJsonObject j_coverages = j_config.find(server_uri).value().toObject();
-    QJsonObject::iterator it;
-
-    for(it = j_coverages.begin(); it != j_coverages.end(); it++)
+    if(m_ui->cboServices->currentText().size() > 0)
     {
+      m_ui->listAttributes->clear();
+      j_config = wtss_tl::services_manager::getInstance().loadConfig().object();
+      QJsonObject j_coverages = j_config.find(server_uri).value().toObject();
+      QJsonObject::iterator it;
+
+      for(it = j_coverages.begin(); it != j_coverages.end(); it++)
+      {
         QJsonObject j_coverage = it.value().toObject();
         if(j_coverage["active"].toBool())
-        {
-            wtss_tl::services_manager::getInstance().changeStatusCoverage(server_uri, it.key());
-        }
-    }
+          wtss_tl::services_manager::getInstance().changeStatusCoverage(server_uri, it.key());
+      }
 
-    wtss_tl::services_manager::getInstance().changeStatusCoverage(server_uri, coverage);
-    QJsonObject j_coverage = j_coverages.find(coverage).value().toObject();
-    QJsonObject::iterator it_at;
-    QJsonObject j_attributes = j_coverage.find("attributes").value().toObject();
+      wtss_tl::services_manager::getInstance().changeStatusCoverage(server_uri, coverage);
+      QJsonObject j_coverage = j_coverages.find(coverage).value().toObject();
+      QJsonObject::iterator it_at;
+      QJsonObject j_attributes = j_coverage.find("attributes").value().toObject();
 
-    for(it_at = j_attributes.begin(); it_at != j_attributes.end(); it_at++)
-    {
-      QString attribute = it_at.key();
-      bool active = it_at.value().toBool();
-      QListWidgetItem* a = new QListWidgetItem(attribute, m_ui->listAttributes);
-      a->setFlags(a->flags() | Qt::ItemIsUserCheckable);
-      if(active)
-        a->setCheckState(Qt::Checked);
-      else
-        a->setCheckState(Qt::Unchecked);
+      for(it_at = j_attributes.begin(); it_at != j_attributes.end(); it_at++)
+      {
+        QString attribute = it_at.key();
+        bool active = it_at.value().toBool();
+        QListWidgetItem* a = new QListWidgetItem(attribute, m_ui->listAttributes);
+        a->setFlags(a->flags() | Qt::ItemIsUserCheckable);
+        if(active)
+          a->setCheckState(Qt::Checked);
+        else
+          a->setCheckState(Qt::Unchecked);
+      }
     }
   }
 }

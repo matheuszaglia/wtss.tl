@@ -64,8 +64,10 @@ namespace wtss_tl
       bool getStatusCoverage(const QString &server_uri, const QString &cv_name);
       bool getStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute);
 
+      void changeStatusService(const QString &server_uri);
       void changeStatusCoverage(const QString &server_uri, const QString &cv_name);
       void changeStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute);
+
   };
 }
 #endif // __WTSS_TL_WTSS_HPP__

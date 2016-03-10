@@ -98,7 +98,7 @@ void wtss_tl::services_manager::addServer(const QString &server_uri)
       j_coverage["attributes"] = j_attributes;
       j_coverages[QString::fromStdString(cv_name)] = j_coverage;
     }
-
+    j_coverages["active"] = QJsonValue(false);
     j_object[server_uri] = j_coverages;
     j_doc.setObject(j_object);
     saveConfig(j_doc);
@@ -158,6 +158,24 @@ bool wtss_tl::services_manager::getStatusAttribute(const QString &server_uri, co
     throw;
 
   return j_attributes[attribute].toBool();
+}
+
+
+void wtss_tl::services_manager::changeStatusService(const QString &server_uri)
+{
+  QJsonDocument j_doc = loadConfig();
+
+  QJsonObject j_object = j_doc.object();
+
+  if(!j_object.contains(server_uri))
+    throw;
+
+  QJsonObject j_server = j_object.find(server_uri).value().toObject();
+
+  if(j_server["active"].toBool())
+    j_server["active"] = QJsonValue(false);
+  else
+    j_server["active"] = QJsonValue(true);
 }
 
 void wtss_tl::services_manager::changeStatusCoverage(const QString &server_uri, const QString &cv_name)

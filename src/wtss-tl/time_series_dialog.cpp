@@ -50,6 +50,7 @@ m_ui(new Ui::time_series_dialog_form)
   this->setWindowTitle(tr("Web Time Series Service - Query"));
   m_ui->txtLongitude->setText(QString::number(query.longitude));
   m_ui->txtLatitude->setText(QString::number(query.latitude));
+
 }
 
 

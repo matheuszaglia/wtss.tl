@@ -58,6 +58,7 @@ namespace wtss_tl{
     public:
 
       wtss_cxx::timeseries_query_t query;
+      wtss_cxx::timeseries_query_result_t result;
 
     private:
 
