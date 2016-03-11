@@ -55,14 +55,21 @@ namespace wtss_tl{
 
     protected slots:
 
-    public:
+    protected:
 
       wtss_cxx::timeseries_query_t query;
       wtss_cxx::timeseries_query_result_t result;
+      std::string server_uri;
 
-    private:
+      void loadSettings();
+
+      void doQuery();
+
+      void plotResult();
+  private:
 
       std::auto_ptr<Ui::time_series_dialog_form> m_ui;
+      QColor randomColor();
   };
 }
 

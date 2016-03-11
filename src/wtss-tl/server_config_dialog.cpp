@@ -110,7 +110,8 @@ void wtss_tl::server_config_dialog::onComboServerSelected()
     m_ui->cboCoverages->clear();
     m_ui->listAttributes->clear();
     server_uri = m_ui->cboServices->currentText();
-    QJsonObject j_coverages = j_config.find(server_uri).value().toObject();
+    QJsonObject j_server = j_config.find(server_uri).value().toObject();
+    QJsonObject j_coverages = j_server["coverages"].toObject();
     QJsonObject::iterator it;
 
     for(it = j_coverages.begin(); it != j_coverages.end(); it++)
@@ -149,7 +150,9 @@ void wtss_tl::server_config_dialog::onComboCoverageChanged(QString coverage)
     {
       m_ui->listAttributes->clear();
       j_config = wtss_tl::services_manager::getInstance().loadConfig().object();
-      QJsonObject j_coverages = j_config.find(server_uri).value().toObject();
+
+      QJsonObject j_server = j_config.find(server_uri).value().toObject();
+      QJsonObject j_coverages = j_server["coverages"].toObject();
       QJsonObject::iterator it;
 
       for(it = j_coverages.begin(); it != j_coverages.end(); it++)

@@ -33,9 +33,10 @@
 // Terralib
 #include <terralib/qt/af/ApplicationController.h>
 #include <terralib/qt/af/events/ApplicationEvents.h>
+#include <terralib/qt/af/Utils.h>
 #include <terralib/qt/af/events/MapEvents.h>
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
-
+#include <terraview/TerraView.h>
 //wtss.tl
 #include "services_manager.hpp"
 #include "server_config_dialog.hpp"
@@ -63,13 +64,16 @@ void wtss_tl::Plugin::startup()
   {
 
     m_menu = te::qt::af::AppCtrlSingleton::getInstance().getMenu("Tools");
+    QAction* m_act = te::qt::af::AppCtrlSingleton::getInstance().findAction("Tools.Customize");
+
     m_wtssMenu = new QMenu(m_menu);
     m_wtssMenu->setTitle("Web Time Series Services");
     m_wtssMenu->setIcon(QIcon::fromTheme("chart-time-series"));
     m_wtssMenu->setObjectName("Tools.WTSS");
 
     QAction* pluginsSeparator = te::qt::af::AppCtrlSingleton::getInstance().findAction("ManagePluginsSeparator");
-    m_menu->insertMenu(pluginsSeparator, m_wtssMenu);
+    m_menu->insertMenu(m_act, m_wtssMenu);
+    m_menu->insertAction(m_act, pluginsSeparator);
 
     m_actionManageServices = new QAction(m_wtssMenu);
     m_actionManageServices->setText("Manage Services...");
@@ -82,14 +86,28 @@ void wtss_tl::Plugin::startup()
     m_timeSeriesAction->setObjectName("Tools.WTSS.Query Time Series");
     m_timeSeriesAction->setCheckable(true);
     m_timeSeriesAction->setIcon(QIcon::fromTheme("chart-time-series"));
+    m_timeSeriesAction->setEnabled(true);
     m_wtssMenu->addAction(m_timeSeriesAction);
 
-    m_wtssToolBar = new QToolBar;
-    m_wtssToolBar->setObjectName("WTSS Toolbar");
-    te::qt::af::AppCtrlSingleton::getInstance().addToolBar("WTSSToolbar", m_wtssToolBar);
-    m_wtssToolBar->addAction(m_timeSeriesAction);
+
+    m_wtssToolBar = te::qt::af::AppCtrlSingleton::getInstance().getToolBar("WTSSToolBar");
+
+    if(m_wtssToolBar == 0)
+    {
+      m_wtssToolBar = new QToolBar;
+      m_wtssToolBar->setObjectName("WTSS Tool Bar");
+      m_wtssToolBar->addAction(m_timeSeriesAction);
+      m_wtssToolBar->setEnabled(true);
+    }
+
+    te::qt::af::AppCtrlSingleton::getInstance().addToolBar("WTSSToolBar", m_wtssToolBar);
 
     registerActions();
+
+    te::qt::af::AddToolBarToSettings(m_wtssToolBar);
+    te::qt::af::UpdateToolBarsInTheSettings(&te::qt::af::AppCtrlSingleton::getInstance());
+
+
   }
 
 }
@@ -100,7 +118,14 @@ void wtss_tl::Plugin::shutdown()
     return;
   m_initialized = false;
 
-  te::qt::af::AppCtrlSingleton::getInstance().removeToolBar("WTSSToolbar");
+  delete m_actionManageServices;
+  delete m_timeSeriesAction;
+//  delete m_actionQuery;
+  te::qt::af::RemoveToolBarFromSettings(m_wtssToolBar);
+  te::qt::af::UpdateToolBarsInTheSettings(&te::qt::af::AppCtrlSingleton::getInstance());
+  delete m_wtssToolBar;
+  delete m_wtssMenu;
+  te::qt::af::AppCtrlSingleton::getInstance().removeToolBar("WTSSToolBar");
 }
 
 void wtss_tl::Plugin::registerActions()
