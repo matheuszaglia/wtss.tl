@@ -16,59 +16,46 @@
   with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
+/*!
+  \file wtss-tl/time_series_tool.hpp
 
-#ifndef __WTSS_TL_SERVER_CONFIG_ACTION_HPP__
-#define __WTSS_TL_SERVER_CONFIG_ACTION_HPP__
+  \brief Time series tool for Web Time Series Services plugin.
+
+  \author Matheus Cavassan Zaglia
+ */
+
+
+
+#ifndef __WTSS_TL_TIME_SERIES_TOOL_HPP__
+#define __WTSS_TL_TIME_SERIES_TOOL_HPP__
+
 
 //QT
-#include <QMenu>
-#include <QAction>
 #include <QObject>
+#include <QDialog>
 
-namespace te
-{
-  namespace qt
-  {
-    namespace af
-    {
-      namespace evt
-      {
-        struct Event;
-      }
-    }
-  }
-}
-
+//TerraLib
+#include <terralib/qt/widgets/tools/AbstractTool.h>
 
 namespace wtss_tl
 {
-  class server_config_action : public QObject
+  class time_series_tool : public te::qt::widgets::AbstractTool
   {
     Q_OBJECT
+
     public:
 
-      server_config_action(QMenu* menu);
-      ~server_config_action();
+      time_series_tool(te::qt::widgets::MapDisplay* display, QObject* parent = 0);
+      ~time_series_tool();
 
-    protected slots:
+      bool mouseReleaseEvent(QMouseEvent* e);
 
-      void onActionActivated();
+    private:
 
-    protected:
-
-      void createAction(std::string name, std::string pixmap = "");
-
-    Q_SIGNALS:
-
-      void triggered(te::qt::af::evt::Event* e);
-
-    protected:
-
-      QMenu* m_menu;        //!< Parent Menu.
-      QAction* m_action;    //!< Action used to call the process.
+      QDialog* m_dialog;
 
   };
 }
 
 
-#endif //__WTSS_TL_SERVER_CONFIG_ACTION_HPP__
+#endif // __WTSS_TL_TIME_SERIES_TOOL_HPP__

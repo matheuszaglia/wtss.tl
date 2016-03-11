@@ -13,22 +13,32 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
+/*!
+  \file wtss-tl/time_series_dialog.hpp
+
+  \brief Time series query dialog for Web Time Series Services plugin.
+
+  \author Matheus Cavassan Zaglia
+ */
 
 #ifndef __WTSS_TL_TIME_SERIES_DIALOG_HPP__
 #define __WTSS_TL_TIME_SERIES_DIALOG_HPP__
 
-// STL
+//wtss.cxx
+#include <wtss-cxx/data_types.hpp>
+
+//STL
 #include <memory>
 #include <string>
+
 //QT
 #include <QDialog>
 #include <QObject>
 #include <QtGui>
 #include <QListWidgetItem>
-//wtss.tl
 
 namespace Ui { class time_series_dialog_form; }
 
@@ -39,17 +49,20 @@ namespace wtss_tl{
 
     public:
 
-    time_series_dialog(QWidget* parent = 0, Qt::WindowFlags f = 0);
+      time_series_dialog(wtss_cxx::timeseries_query_t query, QWidget* parent = 0, Qt::WindowFlags f = 0);
 
-    ~time_series_dialog();
+      ~time_series_dialog();
 
     protected slots:
 
+    public:
 
-  private:
+      wtss_cxx::timeseries_query_t query;
+      wtss_cxx::timeseries_query_result_t result;
+
+    private:
 
       std::auto_ptr<Ui::time_series_dialog_form> m_ui;
-
   };
 }
 

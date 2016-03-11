@@ -13,32 +13,43 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
-//wtss.tl
-#include "time_series_dialog.hpp"
-#include "ui_time_series_dialog_form.h"
-//QT
-#include <QInputDialog>
-#include <QMessageBox>
 
-#include <iostream>
+/*!
+  \file wtss-tl/time_series_dialog.cpp
+
+  \brief Time series query dialog for Web Time Series Services plugin.
+
+  \author Matheus Cavassan Zaglia
+ */
 
 //wtss.cxx
 #include <wtss-cxx/wtss.hpp>
 
+
 //wtss.tl
-#include "server_manager.hpp"
+#include "time_series_dialog.hpp"
+#include "ui_time_series_dialog_form.h"
+#include "services_manager.hpp"
+
+//QT
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QString>
 
 //boost
 #include <boost/algorithm/string/join.hpp>
 
-wtss_tl::time_series_dialog::time_series_dialog(QWidget *parent, Qt::WindowFlags f):
+wtss_tl::time_series_dialog::time_series_dialog(wtss_cxx::timeseries_query_t query, QWidget *parent, Qt::WindowFlags f):
 QDialog(parent, f),
+query(query),
 m_ui(new Ui::time_series_dialog_form)
 {
   m_ui->setupUi(this);
-  this->setWindowTitle(tr("Web Time Series Service"));
+  this->setWindowTitle(tr("Web Time Series Service - Query"));
+  m_ui->txtLongitude->setText(QString::number(query.longitude));
+  m_ui->txtLatitude->setText(QString::number(query.latitude));
 
 }
 

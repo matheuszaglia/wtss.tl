@@ -16,6 +16,13 @@
   with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
+/*!
+  \file wtss-tl/server_config_dialog.hpp
+
+  \brief Configuration dialog for Web Time Series Services plugin.
+
+  \author Matheus Cavassan Zaglia
+ */
 
 #ifndef __WTSS_TL_SERVER_CONFIG_DIALOG_HPP__
 #define __WTSS_TL_SERVER_CONFIG_DIALOG_HPP__
@@ -23,13 +30,14 @@
 // STL
 #include <memory>
 #include <string>
+
 //QT
 #include <QDialog>
 #include <QObject>
 #include <QtGui>
 #include <QListWidgetItem>
-//wtss.tl
 
+//wtss.cxx
 #include <wtss-cxx/data_types.hpp>
 
 namespace Ui { class server_config_dialog_form; }
@@ -41,9 +49,9 @@ namespace wtss_tl{
 
     public:
 
-    server_config_dialog(QWidget* parent = 0, Qt::WindowFlags f = 0);
+      server_config_dialog(QWidget* parent = 0, Qt::WindowFlags f = 0);
 
-    ~server_config_dialog();
+      ~server_config_dialog();
 
     protected slots:
 
@@ -51,14 +59,19 @@ namespace wtss_tl{
 
       void onServerRemoveButtonClicked();
 
-      void onListServerItemSelected();
+      void onComboServerSelected();
 
-      void onListCoverageChecked(QListWidgetItem *item);
-  private:
+      void onComboCoverageChanged(QString coverage);
 
+      void onListAtrributesChecked(QListWidgetItem* item);
+    private:
+
+      bool dirty;
       std::auto_ptr<Ui::server_config_dialog_form> m_ui;
-      QString server_uri;
+
       QJsonObject j_config;
+      QString server_uri;
+      QString coverage;
   };
 }
 

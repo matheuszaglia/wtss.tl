@@ -25,7 +25,6 @@
  */
 
 // WTSS.TL
-#include "wtss-tl/server_manager.hpp"
 #include <wtss-cxx/wtss.hpp>
 // STL
 #include <cstdlib>
