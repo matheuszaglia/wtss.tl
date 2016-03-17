@@ -39,6 +39,7 @@
 #include <QObject>
 #include <QtGui>
 #include <QListWidgetItem>
+#include "qcustomplot.h"
 
 namespace Ui { class time_series_dialog_form; }
 
@@ -55,14 +56,30 @@ namespace wtss_tl{
 
     protected slots:
 
-    public:
+//      void scrollBarChanged(int value);
+
+//      void xAxisChanged(QCPRange range);
+
+      void onYAxisRangeChanged(QCPRange range);
+      void onXAxisRangeChanged(QCPRange range);
+  protected:
 
       wtss_cxx::timeseries_query_t query;
       wtss_cxx::timeseries_query_result_t result;
+      std::string server_uri;
 
-    private:
+      void loadSettings();
+
+      void doQuery();
+
+      void plotResult();
+
+  private:
 
       std::auto_ptr<Ui::time_series_dialog_form> m_ui;
+      QColor randomColor();
+      double lowerBound;
+      double upperBound;
   };
 }
 

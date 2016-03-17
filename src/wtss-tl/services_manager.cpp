@@ -79,7 +79,7 @@ void wtss_tl::services_manager::addServer(const QString &server_uri)
   if(!j_object.contains(server_uri))
   {
     QJsonObject j_coverages;
-
+    QJsonObject j_server;
     wtss_cxx::wtss remote(server_uri.toStdString());
     std::vector<std::string> result = remote.list_coverages();
 
@@ -90,16 +90,15 @@ void wtss_tl::services_manager::addServer(const QString &server_uri)
       QJsonObject j_attributes;
       QJsonObject j_coverage;
 
-      j_coverage["active"] = QJsonValue(false);
-
       for(wtss_cxx::attribute_t attribute: g_array.attributes)
         j_attributes[QString::fromStdString(attribute.name)] = QJsonValue(false);
 
       j_coverage["attributes"] = j_attributes;
       j_coverages[QString::fromStdString(cv_name)] = j_coverage;
     }
-    j_coverages["active"] = QJsonValue(false);
-    j_object[server_uri] = j_coverages;
+    j_server["coverages"] = j_coverages;
+    j_server["active"] = QJsonValue(false);
+    j_object[server_uri] = j_server;
     j_doc.setObject(j_object);
     saveConfig(j_doc);
   }
@@ -129,7 +128,7 @@ bool wtss_tl::services_manager::getStatusCoverage(const QString &server_uri, con
 
   QJsonObject j_server = j_object.find(server_uri).value().toObject();
 
-  if(!j_server.contains(cv_name))
+  if(!j_server["coverages"].toObject().contains(cv_name))
     throw;
 
   QJsonObject j_coverage = j_server.find(cv_name).value().toObject();
@@ -148,10 +147,10 @@ bool wtss_tl::services_manager::getStatusAttribute(const QString &server_uri, co
 
   QJsonObject j_server = j_object.find(server_uri).value().toObject();
 
-  if(!j_server.contains(cv_name))
+  if(!j_server["coverages"].toObject().contains(cv_name))
     throw;
 
-  QJsonObject j_coverage = j_server.find(cv_name).value().toObject();
+  QJsonObject j_coverage = j_server["coverages"].toObject().find(cv_name).value().toObject();
   QJsonObject j_attributes = j_coverage.find("attributes").value().toObject();
 
   if(!j_attributes.contains(attribute))
@@ -189,17 +188,22 @@ void wtss_tl::services_manager::changeStatusCoverage(const QString &server_uri, 
 
   QJsonObject j_server = j_object.find(server_uri).value().toObject();
 
-  if(!j_server.contains(cv_name))
+  QJsonObject j_coverages = j_server["coverages"].toObject();
+
+  if(!j_coverages.contains(cv_name))
     throw;
 
-  QJsonObject j_coverage = j_server.find(cv_name).value().toObject();
+  QJsonObject j_coverage = j_coverages.find(cv_name).value().toObject();
 
   if(j_coverage["active"].toBool())
     j_coverage["active"] = QJsonValue(false);
   else
     j_coverage["active"] = QJsonValue(true);
 
-  j_server[cv_name] = j_coverage;
+
+
+  j_coverages[cv_name] = j_coverage;
+  j_server["coverages"] = j_coverages;
   j_object[server_uri] = j_server;
   j_doc.setObject(j_object);
   saveConfig(j_doc);
@@ -216,10 +220,12 @@ void wtss_tl::services_manager::changeStatusAttribute(const QString &server_uri,
 
   QJsonObject j_server = j_object.find(server_uri).value().toObject();
 
-  if(!j_server.contains(cv_name))
+  QJsonObject j_coverages = j_server["coverages"].toObject();
+
+  if(!j_server["coverages"].toObject().contains(cv_name))
     throw;
 
-  QJsonObject j_coverage = j_server.find(cv_name).value().toObject();
+  QJsonObject j_coverage = j_coverages.find(cv_name).value().toObject();
   QJsonObject j_attributes = j_coverage.find("attributes").value().toObject();
 
   if(!j_attributes.contains(attribute))
@@ -230,8 +236,10 @@ void wtss_tl::services_manager::changeStatusAttribute(const QString &server_uri,
   else
     j_attributes[attribute] = QJsonValue(true);
 
+
   j_coverage["attributes"] = j_attributes;
-  j_server[cv_name] = j_coverage;
+  j_coverages[cv_name] = j_coverage;
+  j_server["coverages"] = j_coverages;
   j_object[server_uri] = j_server;
   j_doc.setObject(j_object);
   saveConfig(j_doc);
