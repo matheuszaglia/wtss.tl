@@ -48,7 +48,6 @@ set(WTSS_TL_ABSOLUTE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 set(WTSS_TL_BASE_DESTINATION_DIR "")
 
 
-
 # variables that control install locations
 if(NOT DEFINED WTSS_TL_DESTINATION_UNITTEST)
   set(WTSS_TL_DESTINATION_UNITTEST "${WTSS_TL_BASE_DESTINATION_DIR}share/wtss-tl/unittest")
@@ -121,6 +120,7 @@ enable_testing()
 
 # Build tree directory will be needed in all projects.
 include_directories(${CMAKE_BINARY_DIR})
+include_directories("${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl")
 
 
 #
