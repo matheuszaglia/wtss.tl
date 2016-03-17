@@ -25,19 +25,22 @@
  */
 
 
-//wtss.cxx
+// wtss.cxx
 #include <wtss-cxx/wtss.hpp>
 
-//wtss.tl
+// wtss.tl
 #include "server_config_dialog.hpp"
 #include "ui_server_config_dialog_form.h"
 #include "services_manager.hpp"
 
-//QT
+// TerraLib
+#include <terralib/qt/widgets/utils/ScopedCursor.h>
+
+// QT
 #include <QInputDialog>
 #include <QMessageBox>
 
-//boost
+// Boost
 #include <boost/algorithm/string/join.hpp>
 
 wtss_tl::server_config_dialog::server_config_dialog(QWidget *parent, Qt::WindowFlags f):
@@ -76,10 +79,10 @@ void wtss_tl::server_config_dialog::onServerAddButtonClicked()
   QString uri = inputDialog->getText(NULL,"Add Server","Server URI:",QLineEdit::Normal,"", &ok);
   if(!uri.isEmpty())
   {
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+    //QApplication::setOverrideCursor(Qt::WaitCursor);
+    te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
     wtss_tl::services_manager::getInstance().addServer(uri);
     j_config = wtss_tl::services_manager::getInstance().loadConfig().object();
-    QApplication::restoreOverrideCursor();
     m_ui->cboServices->addItem(uri);
   }
 }

@@ -25,7 +25,6 @@
  */
 
 //Terralib
-
 #include <terralib/qt/af/ApplicationController.h>
 
 // WTSS.TL
@@ -34,14 +33,15 @@
 // WTSS.CXX
 #include <wtss-cxx/wtss.hpp>
 
-//QT
+// QT
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QString>
 #include <QFile>
 #include <QTextStream>
-//STL
+
+// STL
 #include <vector>
 #include <string>
 
