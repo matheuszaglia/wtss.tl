@@ -40,11 +40,7 @@
 //boost
 #include <boost/algorithm/string/join.hpp>
 
-//QCustomPlot
-#include "QCustomPlot.h"
-
 //stl
-
 #include <cstdlib>
 #include <ctime>
 
@@ -55,13 +51,19 @@ m_ui(new Ui::time_series_dialog_form)
 {
   m_ui->setupUi(this);
   this->setWindowTitle(tr("Web Time Series Service - Query"));
+  this->setWindowState(Qt::WindowMaximized);
   loadSettings();
+  srand(time(NULL));
 
   QApplication::setOverrideCursor(Qt::WaitCursor);
   doQuery();
   QApplication::restoreOverrideCursor();
-
   plotResult();
+
+  connect(m_ui->customPlot->xAxis,SIGNAL(rangeChanged(QCPRange)),this,SLOT(onXAxisRangeChanged(QCPRange)));
+//  connect(m_ui->customPlot->yAxis,SIGNAL(rangeChanged(QCPRange)),this,SLOT(onYAxisRangeChanged(QCPRange)));
+
+
 }
 
 wtss_tl::time_series_dialog::~time_series_dialog()
@@ -114,13 +116,10 @@ void wtss_tl::time_series_dialog::doQuery()
 void wtss_tl::time_series_dialog::plotResult()
 {
 
-
-  m_ui->customPlot->xAxis->setLabel("Timeline");
-  m_ui->customPlot->yAxis->setLabel("Values");
+  //adding data to graph
   std::vector<wtss_cxx::queried_attribute_t> attributes = result.coverage.queried_attributes;
 
-
-  QVector<double> timeline(result.coverage.timeline.size());
+  QVector<double> timeline(result.coverage.timeline.size(), 0);
   for(int i = 0; i < timeline.size(); ++i)
   {
     wtss_cxx::date d = result.coverage.timeline[i];
@@ -128,31 +127,38 @@ void wtss_tl::time_series_dialog::plotResult()
     start.setTimeSpec(Qt::UTC);
     timeline[i] = start.toTime_t();
   }
-
-  for(int i = 0;i < attributes.size(); ++i)
+  for(unsigned int i = 0;i < attributes.size(); i++)
   {
     wtss_cxx::queried_attribute_t attribute = attributes[i];
     m_ui->customPlot->addGraph();
     m_ui->customPlot->graph(i)->setName(QString::fromStdString(attribute.name));
-    m_ui->customPlot->graph(i)->addData(timeline ,QVector<double>::fromStdVector(attribute.values));
+    for(unsigned int j = 0; j < attribute.values.size(); ++j)
+    {
+      if(attribute.values[j] != 32767) // NEED NEW SERVICE TO WORK PROPERLY
+      {
+        m_ui->customPlot->graph(i)->addData(timeline[j], attribute.values[j]);
+      }
+
+    }
     m_ui->customPlot->graph(i)->setPen(QPen(randomColor()));
   }
 
-
+  // configuring graph visual
+  m_ui->customPlot->xAxis->setLabel("Timeline");
+  m_ui->customPlot->yAxis->setLabel("Values");
   // configure bottom axis to show date and time instead of number:
   m_ui->customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-  m_ui->customPlot->xAxis->setDateTimeFormat("MMMM\nyyyy");
+  m_ui->customPlot->xAxis->setDateTimeFormat("MMM\nyy");
   // set a more compact font size for bottom and left axis tick labels:
   m_ui->customPlot->xAxis->setTickLabelFont(QFont(QFont().family(), 8));
   m_ui->customPlot->yAxis->setTickLabelFont(QFont(QFont().family(), 8));
   // set a fixed tick-step to one tick per month:
-  m_ui->customPlot->xAxis->setAutoTickStep(true);
-  m_ui->customPlot->xAxis->setTickStep(2628000); // one month in seconds
-  m_ui->customPlot->xAxis->setSubTickCount(2000);
-  // apply manual tick and tick label for left axis:
-  m_ui->customPlot->yAxis->setAutoTicks(false);
-  m_ui->customPlot->yAxis->setAutoTickLabels(false);
-  m_ui->customPlot->yAxis->setTickVector(QVector<double>() << 5 << 55);
+  m_ui->customPlot->xAxis->setAutoTickStep(false);
+  m_ui->customPlot->xAxis->setTickStep(2628000);
+  m_ui->customPlot->xAxis->setSubTickCount(3);
+  // apply manual tick and tick label for y axis:
+  m_ui->customPlot->yAxis->setAutoTickStep(true);
+  m_ui->customPlot->yAxis->setAutoTickLabels(true);
   // set axis labels:
   m_ui->customPlot->xAxis->setLabel("Timeline");
   m_ui->customPlot->yAxis->setLabel("Values");
@@ -165,13 +171,51 @@ void wtss_tl::time_series_dialog::plotResult()
   m_ui->customPlot->yAxis2->setTickLabels(false);
   // show legend:
   m_ui->customPlot->legend->setVisible(true);
+  // set interactions
+  m_ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iSelectPlottables | QCP::iRangeZoom);
+
+  m_ui->customPlot->axisRect()->setRangeZoom(Qt::Horizontal);
+  m_ui->customPlot->axisRect()->setRangeDrag(Qt::Horizontal);
+
 
   m_ui->customPlot->rescaleAxes();
+  lowerBound = m_ui->customPlot->xAxis->range().lower;
+  upperBound = m_ui->customPlot->xAxis->range().upper;
+  m_ui->customPlot->xAxis->setRange(lowerBound, lowerBound+2628000*13);
   m_ui->customPlot->replot();
+
 }
 
 QColor wtss_tl::time_series_dialog::randomColor()
 {
-  srand (time(NULL));
-  return QColor(rand() % 255, rand() % 255, rand() % 255);
+  int r = rand() % 255;
+  int g = rand() % 255;
+  int b = rand() % 255;
+  return QColor(r, g, b);
+}
+
+void wtss_tl::time_series_dialog::onXAxisRangeChanged(QCPRange range)
+{
+//  m_ui->customPlot->xAxis->setRangeLower(952905600);
+//  m_ui->customPlot->xAxis->setRangeUpper(1442880000);
+  QCPRange fixedRange(range);
+  if (fixedRange.lower < lowerBound)
+  {
+    fixedRange.lower = lowerBound;
+    fixedRange.upper = lowerBound + range.size();
+    if (fixedRange.upper > upperBound || qFuzzyCompare(range.size(), upperBound-lowerBound))
+      fixedRange.upper = upperBound;
+    m_ui->customPlot->xAxis->setRange(fixedRange); // adapt this line to use your plot/axis
+  }else if (fixedRange.upper > upperBound)
+    {
+      fixedRange.upper = upperBound;
+      fixedRange.lower = upperBound - range.size();
+      if (fixedRange.lower < lowerBound || qFuzzyCompare(range.size(), upperBound-lowerBound))
+        fixedRange.lower = lowerBound;
+      m_ui->customPlot->xAxis->setRange(fixedRange); // adapt this line to use your plot/axis
+    }
+}
+void wtss_tl::time_series_dialog::onYAxisRangeChanged(QCPRange range)
+{
+
 }
