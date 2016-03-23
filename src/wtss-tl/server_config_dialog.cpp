@@ -47,15 +47,18 @@ m_ui(new Ui::server_config_dialog_form)
 {
   m_ui->setupUi(this);
   this->setWindowTitle(tr("Web Time Series Services - Settings"));
-
+  this->setFixedSize(400,500);
   m_ui->btnAddServer->setIcon(QIcon::fromTheme("list-add"));
   m_ui->btnRemoveServer->setIcon(QIcon::fromTheme("list-remove"));
+  m_ui->btnRefreshServer->setIcon(QIcon::fromTheme("view-refresh"));
 
   connect(m_ui->btnAddServer, SIGNAL(clicked()),this,SLOT(onServerAddButtonClicked()));
   connect(m_ui->btnRemoveServer, SIGNAL(clicked()),this,SLOT(onServerRemoveButtonClicked()));
-  connect(m_ui->cboServices,SIGNAL(currentIndexChanged(QString)), SLOT(onComboServerSelected()));
-  connect(m_ui->cboCoverages,SIGNAL(currentIndexChanged(QString)), SLOT(onComboCoverageChanged(QString)));
-  connect(m_ui->listAttributes, SIGNAL(itemChanged(QListWidgetItem*)), SLOT(onListAtrributesChecked(QListWidgetItem*)));
+  connect(m_ui->cboServices,SIGNAL(currentIndexChanged(QString)),this, SLOT(onComboServerSelected()));
+  connect(m_ui->cboCoverages,SIGNAL(currentIndexChanged(QString)),this, SLOT(onComboCoverageChanged(QString)));
+  connect(m_ui->listAttributes, SIGNAL(itemChanged(QListWidgetItem*)),this, SLOT(onListAtrributesChecked(QListWidgetItem*)));
+  connect(m_ui->btnClose,SIGNAL(clicked()),this, SLOT(onCloseButtonClicked()));
+  connect(m_ui->btnRefreshServer,SIGNAL(clicked()), this, SLOT(onServerRefreshButtonClicked()));
 
   j_config = wtss_tl::services_manager::getInstance().loadConfig().object();
   if(j_config.keys().size() > 0)
@@ -100,7 +103,15 @@ void wtss_tl::server_config_dialog::onServerRemoveButtonClicked()
         m_ui->cboCoverages->clear();
         m_ui->listAttributes->clear();
       }
-  }
+    }
+}
+
+void wtss_tl::server_config_dialog::onServerRefreshButtonClicked()
+{
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+  wtss_tl::services_manager::getInstance().addServer(m_ui->cboServices->currentText());
+  j_config = wtss_tl::services_manager::getInstance().loadConfig().object();
+  QApplication::restoreOverrideCursor();
 }
 
 void wtss_tl::server_config_dialog::onComboServerSelected()
@@ -187,4 +198,8 @@ void wtss_tl::server_config_dialog::onListAtrributesChecked(QListWidgetItem *ite
   wtss_tl::services_manager::getInstance().changeStatusAttribute(m_ui->cboServices->currentText(), m_ui->cboCoverages->currentText(), item->text());
 }
 
+void wtss_tl::server_config_dialog::onCloseButtonClicked()
+{
+  this->close();
+}
 
