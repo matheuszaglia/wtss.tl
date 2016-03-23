@@ -60,6 +60,7 @@ namespace wtss_tl
 
       void addServer(const QString &server_uri);
       void removeServer(const QString &server_uri);
+      void refreshServer(const QString &server_uri);
 
       bool getStatusCoverage(const QString &server_uri, const QString &cv_name);
       bool getStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute);
@@ -67,6 +68,7 @@ namespace wtss_tl
       void changeStatusService(const QString &server_uri);
       void changeStatusCoverage(const QString &server_uri, const QString &cv_name);
       void changeStatusAttribute(const QString &server_uri, const QString &cv_name, const QString &attribute);
+
 
   };
 }

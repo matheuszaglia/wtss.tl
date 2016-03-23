@@ -104,6 +104,40 @@ void wtss_tl::services_manager::addServer(const QString &server_uri)
   }
 }
 
+void wtss_tl::services_manager::refreshServer(const QString &server_uri)
+{
+
+  QJsonDocument j_doc = loadConfig();
+  QJsonObject j_object = j_doc.object();
+
+  if(j_object.contains(server_uri))
+  {
+    QJsonObject j_coverages;
+    QJsonObject j_server;
+    wtss_cxx::wtss remote(server_uri.toStdString());
+    std::vector<std::string> result = remote.list_coverages();
+
+    for(std::string cv_name: result)
+    {
+      wtss_cxx::geoarray_t g_array = remote.describe_coverage(cv_name);
+
+      QJsonObject j_attributes;
+      QJsonObject j_coverage;
+
+      for(wtss_cxx::attribute_t attribute: g_array.attributes)
+        j_attributes[QString::fromStdString(attribute.name)] = QJsonValue(false);
+
+      j_coverage["attributes"] = j_attributes;
+      j_coverages[QString::fromStdString(cv_name)] = j_coverage;
+    }
+    j_server["coverages"] = j_coverages;
+    j_server["active"] = QJsonValue(false);
+    j_object[server_uri] = j_server;
+    j_doc.setObject(j_object);
+    saveConfig(j_doc);
+  }
+}
+
 void wtss_tl::services_manager::removeServer(const QString &server_uri)
 {
   QJsonDocument j_doc = loadConfig();

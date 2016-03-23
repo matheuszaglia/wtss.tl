@@ -111,10 +111,12 @@ void wtss_tl::server_config_dialog::onServerRemoveButtonClicked()
 
 void wtss_tl::server_config_dialog::onServerRefreshButtonClicked()
 {
-  QApplication::setOverrideCursor(Qt::WaitCursor);
-  wtss_tl::services_manager::getInstance().addServer(m_ui->cboServices->currentText());
-  j_config = wtss_tl::services_manager::getInstance().loadConfig().object();
-  QApplication::restoreOverrideCursor();
+  if(!m_ui->cboServices->currentText().isEmpty())
+  {
+    te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
+    wtss_tl::services_manager::getInstance().refreshServer(m_ui->cboServices->currentText());
+    j_config = wtss_tl::services_manager::getInstance().loadConfig().object();
+  }
 }
 
 void wtss_tl::server_config_dialog::onComboServerSelected()
