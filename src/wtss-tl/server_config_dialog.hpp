@@ -59,11 +59,16 @@ namespace wtss_tl{
 
       void onServerRemoveButtonClicked();
 
+      void onServerRefreshButtonClicked();
+
       void onComboServerSelected();
 
       void onComboCoverageChanged(QString coverage);
 
       void onListAtrributesChecked(QListWidgetItem* item);
+
+      void onCloseButtonClicked();
+
     private:
 
       bool dirty;
