@@ -134,8 +134,6 @@ find_package(Qt5 5.1 REQUIRED COMPONENTS Core Gui Widgets PrintSupport)
 
 find_package(terralib REQUIRED)
 
-find_package(cppnetlib REQUIRED)
-
 find_package(wtss_cxx REQUIRED)
 
 
@@ -205,6 +203,9 @@ configure_file(${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl/version.hpp.in
 # install and targets export
 #
 
+file(COPY ${WTSS_TL_ABSOLUTE_ROOT_DIR}/share/wtss-tl/icons/
+    DESTINATION ${CMAKE_BINARY_DIR}/share/wtss-tl/icons)
+
 install(TARGETS terralib_mod_qt_wtss_plugin
         EXPORT wtss_tl-targets
         RUNTIME DESTINATION ${WTSS_TL_DESTINATION_RUNTIME} COMPONENT runtime
@@ -217,6 +218,9 @@ install(FILES ${CMAKE_BINARY_DIR}/wtss_tl_version.hpp
 
 install(FILES ${WTSS_TL_ABSOLUTE_ROOT_DIR}/share/wtss-tl/plugins/te.qt.wtss.teplg
         DESTINATION ${WTSS_TL_DESTINATION_SHARE}/wtss-tl/plugins COMPONENT runtime)
+
+install(DIRECTORY ${WTSS_TL_ABSOLUTE_ROOT_DIR}/share/wtss-tl/icons
+        DESTINATION ${WTSS_TL_DESTINATION_SHARE} COMPONENT runtime)
 
 install(FILES ${WTSS_TL_UTEST_SRC_FILES}
         DESTINATION ${WTSS_TL_DESTINATION_UNITTEST} COMPONENT devel)

@@ -13,13 +13,15 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with TerraLib Web Services. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with TerraLib Web Services. See COPYING. If not, see
+  <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
 /*!
   \file wtss-tl/plugin.hpp
 
-  \brief Add a plugin interface for dynamic loading of the Web Time Series Data Service plugin.
+  \brief Add a plugin interface for dynamic loading of the Web Time Series Data
+  Service plugin.
 
   \author Matheus Cavassan Zaglia
  */
@@ -29,16 +31,18 @@
 
 #define TE_QT_WTSS_PLUGIN_NAME "te.qt.wtss"
 
+#include "wtss-tl/wtss_dialog.hpp"
+
 // TerraLib
 #include <terralib/plugin/Plugin.h>
 
-//QT
-#include <QObject>
+// QT
 #include <QAction>
 #include <QMenu>
+#include <QObject>
 #include <QToolBar>
 
-//STL
+// STL
 #include <vector>
 namespace te
 {
@@ -54,13 +58,15 @@ namespace te
   }
 }
 
-namespace wtss_tl{
-  class Plugin : public QObject, public te::plugin::Plugin
+namespace wtss
+{
+  namespace tl
   {
-    Q_OBJECT
+    class Plugin : public QObject, public te::plugin::Plugin
+    {
+      Q_OBJECT
 
-    public:
-
+     public:
       Plugin(const te::plugin::PluginInfo& pluginInfo);
 
       ~Plugin();
@@ -69,8 +75,7 @@ namespace wtss_tl{
 
       void shutdown();
 
-    protected:
-
+     protected:
       void registerActions();
 
       void unregisterActions();
@@ -79,8 +84,7 @@ namespace wtss_tl{
 
       void triggered(te::qt::af::evt::Event* e);
 
-    protected:
-
+     protected:
       QAction* m_actionManageServices;
       QAction* m_actionQuery;
       QMenu* m_menu;
@@ -88,16 +92,18 @@ namespace wtss_tl{
       QToolBar* m_wtssToolBar;
       QAction* m_timeSeriesAction;
 
-    protected slots:
+     protected slots:
       void onServerActionActivated();
-      void onActionQueryToggled(bool checked);
-  };
+      void onActionQueryToggled();
 
+     private:
+      wtss::tl::wtss_dialog* m_wtssDlg;
+    };
+  }
 }
 
 #define export_macro
 
 PLUGIN_CALL_BACK_DECLARATION(export_macro)
-
 
 #endif

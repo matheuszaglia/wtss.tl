@@ -13,7 +13,8 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with WTSS.TL. See COPYING. If not, see
+  <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
 /*!
@@ -24,31 +25,36 @@
   \author Matheus Cavassan Zaglia
  */
 
+// wtss.tl
+#include "wtss_tool.hpp"
+#include "wtss_dialog.hpp"
 
-//wtss.tl
-#include "time_series_tool.hpp"
-#include "time_series_dialog.hpp"
-
-//wtss.cxx
+// wtss.cxx
 #include <wtss-cxx/wtss.hpp>
 
-//TerraLib
+// TerraLib
+#include <terralib/qt/af/ApplicationController.h>
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
 
-wtss_tl::time_series_tool::time_series_tool(te::qt::widgets::MapDisplay *display, QObject *parent): te::qt::widgets::AbstractTool(display, parent),
-m_dialog(new QDialog(display))
+wtss::tl::time_series_tool::time_series_tool(
+    te::qt::widgets::MapDisplay *display, QObject *parent)
+    : te::qt::widgets::AbstractTool(display, parent),
+      m_dialog(new QDialog(display)),
+      m_wtssDlg(0)
 {
-
 }
 
-wtss_tl::time_series_tool::~time_series_tool()
+wtss::tl::time_series_tool::~time_series_tool()
 {
-
+  if(m_wtssDlg)
+  {
+    delete m_wtssDlg;
+    m_wtssDlg = 0;
+  }
 }
 
-bool wtss_tl::time_series_tool::mouseReleaseEvent(QMouseEvent *e)
+bool wtss::tl::time_series_tool::mouseReleaseEvent(QMouseEvent *e)
 {
-
   QPointF qtPoint = e->localPos();
   QPointF coordPoint = m_display->transform(qtPoint);
 
@@ -61,16 +67,24 @@ bool wtss_tl::time_series_tool::mouseReleaseEvent(QMouseEvent *e)
 
   converter->convert(coordPoint.x(), coordPoint.y(), c.x, c.y);
 
-  QWidget* m_parent = new QWidget(0);
-
-  wtss_cxx::timeseries_query_t query;
+  wtss::cxx::timeseries_query_t query;
   query.longitude = c.x;
-  query.latitude  = c.y;
+  query.latitude = c.y;
 
-  wtss_tl::time_series_dialog dialog(query, m_parent);
+  if(!m_wtssDlg)
+  {
+    m_wtssDlg = new wtss::tl::wtss_dialog(
+        te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
+  }
 
-  if(dialog.exec() != QDialog::Accepted)
-    return true;
+  m_wtssDlg->do_timeseries_query(query);
 
-  return false;
+  m_wtssDlg->setModal(false);
+
+  m_wtssDlg->show();
+
+  //  if (m_wtssDlg->exec() != QDialog::Accepted)
+  //    return true;
+
+  //  return false;
 }
