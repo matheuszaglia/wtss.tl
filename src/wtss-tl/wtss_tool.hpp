@@ -13,7 +13,8 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License along
-  with WTSS.TL. See COPYING. If not, see <http://www.gnu.org/licenses/lgpl-3.0.html>.
+  with WTSS.TL. See COPYING. If not, see
+  <http://www.gnu.org/licenses/lgpl-3.0.html>.
  */
 
 /*!
@@ -24,38 +25,40 @@
   \author Matheus Cavassan Zaglia
  */
 
-
-
 #ifndef __WTSS_TL_TIME_SERIES_TOOL_HPP__
 #define __WTSS_TL_TIME_SERIES_TOOL_HPP__
 
-
-//QT
-#include <QObject>
+// QT
 #include <QDialog>
+#include <QObject>
 
-//TerraLib
+// TerraLib
 #include <terralib/qt/widgets/tools/AbstractTool.h>
 
-namespace wtss_tl
+// Wtss
+#include "wtss-tl/wtss_dialog.hpp"
+
+namespace wtss
 {
-  class time_series_tool : public te::qt::widgets::AbstractTool
+  namespace tl
   {
-    Q_OBJECT
+    class time_series_tool : public te::qt::widgets::AbstractTool
+    {
+      Q_OBJECT
 
-    public:
-
-      time_series_tool(te::qt::widgets::MapDisplay* display, QObject* parent = 0);
+     public:
+      time_series_tool(te::qt::widgets::MapDisplay* display,
+                       QObject* parent = 0);
       ~time_series_tool();
 
       bool mouseReleaseEvent(QMouseEvent* e);
 
-    private:
-
+     private:
       QDialog* m_dialog;
 
-  };
+      wtss::tl::wtss_dialog* m_wtssDlg;
+    };
+  }
 }
 
-
-#endif // __WTSS_TL_TIME_SERIES_TOOL_HPP__
+#endif  // __WTSS_TL_TIME_SERIES_TOOL_HPP__

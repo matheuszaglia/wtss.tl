@@ -37,19 +37,24 @@
 //! wtss namespace.
 namespace wtss
 {
+  namespace tl
+  {
+    //! Base exception class for WTSS.TL.
+    struct exception: virtual std::exception, virtual boost::exception { };
 
-  //! Base exception class for WTSS.TL.
-  struct exception: virtual std::exception, virtual boost::exception { };
+    //! Type for handling missing parameter value in service request.
+    struct missing_argument_exception: virtual exception { };
 
-  //! Type for handling missing parameter value in service request.
-  struct missing_argument_error: virtual exception { };
+    //! Type for handling invalid parameter value in service request.
+    struct invalid_argument_exception: virtual exception { };
 
-  //! Type for handling invalid parameter value in service request.
-  struct invalid_argument_error: virtual exception { };
+    //! Type for handling invalid parameter value in service request.
+    struct out_of_range_exception: virtual exception { };
 
-  //! The base type for error report messages.
-  typedef boost::error_info<struct tag_error_description, std::string> error_description;
+    //! The base type for error report messages.
+    typedef boost::error_info<struct tag_error_description, std::string>
+        error_description;
 
-}   // end namespace wtss
-
+  }// end namespace tl
+}// end namespace wtss
 #endif // __WTSS_TL_EXCEPTION_HPP__
