@@ -75,6 +75,8 @@ namespace wtss
 
       void shutdown();
 
+      te::qt::widgets::MapDisplay* get_map_display();
+
      protected:
       void registerActions();
 
@@ -85,16 +87,18 @@ namespace wtss
       void triggered(te::qt::af::evt::Event* e);
 
      protected:
-      QAction* m_actionManageServices;
-      QAction* m_actionQuery;
       QMenu* m_menu;
-      QMenu* m_wtssMenu;
-      QToolBar* m_wtssToolBar;
+      QAction* m_wtssAction;
+      QAction* m_actionManageServices;
       QAction* m_timeSeriesAction;
+      QToolBar* m_wtssToolBar;
 
      protected slots:
       void onServerActionActivated();
+
       void onActionQueryToggled();
+
+      void onActionActivated(bool);
 
      private:
       wtss::tl::wtss_dialog* m_wtssDlg;
