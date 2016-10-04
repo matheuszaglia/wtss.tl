@@ -75,7 +75,11 @@ namespace wtss
 
       void set_map_display(te::qt::widgets::MapDisplay* mapDisplay);
 
+      void set_wtss_tool();
+
       void do_timeseries_query(wtss::cxx::timeseries_query_t query);
+
+      void hide_graph(bool check);
 
      protected slots:
 
@@ -114,14 +118,23 @@ namespace wtss
       void add_result_to_plot(QString server_uri,
                               wtss::cxx::timeseries_query_result_t result);
 
+      bool validate_query();
+
       void plot_result();
 
       QColor random_color();
 
      private:
-      bool dirty;
 
       std::auto_ptr<Ui::wtss_dialog_form> m_ui;
+
+      bool dirty;
+
+      bool m_checkServer;
+
+      bool m_checkCoverage;
+
+      bool m_checkAttribute;
 
       QJsonObject j_config;
 

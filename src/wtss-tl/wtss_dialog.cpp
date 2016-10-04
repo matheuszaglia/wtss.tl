@@ -51,7 +51,12 @@
 #include <wtss-cxx/wtss.hpp>
 
 wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
-    : QDialog(parent, f), dirty(false), m_ui(new Ui::wtss_dialog_form)
+    : QDialog(parent, f),
+      m_ui(new Ui::wtss_dialog_form),
+      dirty(false),
+      m_checkServer(0),
+      m_checkCoverage(0),
+      m_checkAttribute(0)
 {
   m_ui->setupUi(this);
   this->setWindowTitle(tr("Web Time Series Services"));
@@ -84,22 +89,27 @@ wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
   connect(m_ui->customPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), this,
           SLOT(onXAxisRangeChanged(QCPRange)));
 
-  //  j_config =
-  //  wtss::tl::server_manager::getInstance().loadSettings().object();
-  //  for (QJsonObject::iterator it = j_config.begin(); it != j_config.end();
-  //  ++it)
-  //    add_server(it.key());
-
   load_settings();
 
   dirty = true;
 }
 
 wtss::tl::wtss_dialog::~wtss_dialog() {}
+
 void wtss::tl::wtss_dialog::set_map_display(
     te::qt::widgets::MapDisplay *mapDisplay)
 {
   m_mapDisplay = mapDisplay;
+}
+
+void wtss::tl::wtss_dialog::set_wtss_tool()
+{
+  wtss::tl::wtss_tool* tool =
+      new wtss::tl::wtss_tool(m_mapDisplay);
+
+  m_mapDisplay->setCursor(Qt::CrossCursor);
+
+  m_mapDisplay->setCurrentTool(tool);
 }
 
 void wtss::tl::wtss_dialog::do_timeseries_query(
@@ -108,11 +118,21 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
   m_ui->latLineEdit->setText(QString::number(query.latitude));
   m_ui->longLineEdit->setText(QString::number(query.longitude));
   m_ui->customPlot->clearGraphs();
+
   te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
+
   QJsonObject j_object =
       wtss::tl::server_manager::getInstance().loadSettings().object();
 
+  if(j_object.isEmpty())
+      return;
+
   QJsonObject j_server;
+
+  m_checkServer = false;
+  m_checkCoverage = false;
+  m_checkAttribute = false;
+
 
   for(QJsonObject::iterator it_server = j_object.begin();
       it_server != j_object.end(); ++it_server)
@@ -148,7 +168,10 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
             QJsonObject j_attribute = it_attributes.value().toObject();
 
             if(j_attribute["active"].toBool() == true)
+            {
               new_q.attributes.push_back(it_attributes.key().toUtf8().data());
+              m_checkAttribute = true;
+            }
           }
 
           if(new_q.attributes.size() > 0)
@@ -170,12 +193,29 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
                   << error_description((err_msg % new_q.coverage_name).str());
             }
           }
+          m_checkCoverage = true;
         }
       }
+      m_checkServer = true;
     }
   }
 
-  plot_result();
+  if(validate_query())
+  {
+    plot_result();
+  }
+  else
+    return;
+}
+
+void wtss::tl::wtss_dialog::hide_graph(bool check)
+{
+  if(check)
+  {
+    m_ui->graphFrame->hide();
+    m_ui->m_hideToolButton->hide();
+    wtss_dialog::adjustSize();
+  }
 }
 
 void wtss::tl::wtss_dialog::onServerAddButtonClicked()
@@ -191,14 +231,29 @@ void wtss::tl::wtss_dialog::onServerAddButtonClicked()
                                      QLineEdit::Normal, "", &ok);
   if(!uri.isEmpty())
   {
-    te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
+     te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
 
-    wtss::tl::server_manager::getInstance().addServer(uri);
+     try
+     {
+        wtss::tl::server_manager::getInstance().addServer(uri);
 
-    j_config = wtss::tl::server_manager::getInstance().loadSettings().object();
+        j_config =
+            wtss::tl::server_manager::getInstance().loadSettings().object();
 
-    add_server(uri);
+        add_server(uri);
+     }
+     catch(...)
+     {
+        QMessageBox::warning(this, tr("Warning"), tr("An error has occurred, "
+                                                     "please retype the wtss "
+                                                     "server address."));
+     }
   }
+  else
+  {
+    QMessageBox::warning(this, tr("Warning"), tr("Please, input a server."));
+  }
+
   dirty = true;
 }
 
@@ -217,15 +272,32 @@ void wtss::tl::wtss_dialog::onServerRemoveButtonClicked()
 
     if(reply == QMessageBox::Yes)
     {
-      wtss::tl::server_manager::getInstance().removeServer(
-          m_ui->m_serverTreeWidget->currentItem()->text(0));
+       try
+       {
+          wtss::tl::server_manager::getInstance().removeServer(
+                m_ui->m_serverTreeWidget->currentItem()->text(0));
 
-      j_config =
-          wtss::tl::server_manager::getInstance().loadSettings().object();
+          j_config =
+              wtss::tl::server_manager::getInstance().loadSettings().object();
 
-      delete m_ui->m_serverTreeWidget->currentItem();
+          delete m_ui->m_serverTreeWidget->currentItem();
+
+          QMessageBox::information(this, tr(""),
+                                   tr("The server was removed with success."));
+       }
+       catch(...)
+       {
+          QMessageBox::warning(this, tr("Warning"),
+                               tr("An error has occurred, please try again."));
+       }
     }
   }
+  else
+  {
+     QMessageBox::warning(this, tr("Warning"),
+                          tr("Please, select a server."));
+  }
+
   dirty = true;
 }
 
@@ -235,14 +307,29 @@ void wtss::tl::wtss_dialog::onServerRefreshButtonClicked()
   if(m_ui->m_serverTreeWidget->currentItem() &&
      !m_ui->m_serverTreeWidget->currentItem()->parent())
   {
-    QString uri = m_ui->m_serverTreeWidget->currentItem()->text(0);
+    try
+    {
+       QString uri = m_ui->m_serverTreeWidget->currentItem()->text(0);
 
-    wtss::tl::server_manager::getInstance().refreshServer(uri);
+       wtss::tl::server_manager::getInstance().refreshServer(uri);
 
-    delete m_ui->m_serverTreeWidget->currentItem();
+       delete m_ui->m_serverTreeWidget->currentItem();
 
-    add_server(uri);
+       add_server(uri);
+    }
+    catch(...)
+    {
+       QMessageBox::warning(this, tr("Warning"),
+                            tr("An error has occurred, "
+                               "please check server list."));
+    }
   }
+  else
+  {
+     QMessageBox::warning(this, tr("Warning"),
+                          tr("Please, select a server."));
+  }
+
   dirty = true;
 }
 
@@ -309,9 +396,7 @@ void wtss::tl::wtss_dialog::onHideButtonClicked()
 }
 
 void wtss::tl::wtss_dialog::onHelpButtonClicked() {}
-
 void wtss::tl::wtss_dialog::onCloseButtonClicked() { this->close(); }
-
 void wtss::tl::wtss_dialog::onExportGraphClicked()
 {
   QCPDataMap *graph_data = m_ui->customPlot->graph()->data();
@@ -410,9 +495,21 @@ void wtss::tl::wtss_dialog::onQueryButtonClicked()
 
 void wtss::tl::wtss_dialog::load_settings()
 {
-  j_config = wtss::tl::server_manager::getInstance().loadSettings().object();
-  for(QJsonObject::iterator it = j_config.begin(); it != j_config.end(); ++it)
-    add_server(it.key());
+  try
+  {
+     j_config =
+         wtss::tl::server_manager::getInstance().loadSettings().object();
+
+     for(QJsonObject::iterator it = j_config.begin();
+         it != j_config.end(); ++it)
+       add_server(it.key());
+  }
+  catch(...)
+  {
+    QMessageBox::warning(this, tr("Warning"),
+                         tr("An error has occurred, "
+                            "when try to load settings."));
+  }
 }
 
 void wtss::tl::wtss_dialog::add_server(QString server)
@@ -526,6 +623,37 @@ void wtss::tl::wtss_dialog::add_result_to_plot(
     }
 
     m_ui->customPlot->graph(i)->setPen(QPen(random_color()));
+  }
+}
+
+bool wtss::tl::wtss_dialog::validate_query()
+{
+  if(m_checkServer)
+  {
+    if(m_checkCoverage)
+    {
+      if(m_checkAttribute)
+      {
+        return true;
+      }
+      else
+      {
+        QMessageBox::warning(this, tr("Warning"),
+                             tr("Please, select an attribute."));
+        return false;
+      }
+    }
+    else
+    {
+      QMessageBox::warning(this, tr("Warning"),
+                           tr("Please, select a coverage."));
+      return false;
+    }
+  }
+  else
+  {
+    QMessageBox::warning(this, tr("Warning"), tr("Please, select a server"));
+    return false;
   }
 }
 
