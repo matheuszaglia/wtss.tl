@@ -28,6 +28,9 @@
 
 // wtss
 #include "plugin.hpp"
+#include "server_manager.hpp"
+#include "wtss_dialog.hpp"
+#include "wtss_tool.hpp"
 
 // QT
 #include <QApplication>
@@ -43,13 +46,9 @@
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
 #include <terraview/TerraView.h>
 
-// wtss.tl
-#include "server_manager.hpp"
-#include "wtss_dialog.hpp"
-#include "wtss_tool.hpp"
 
 wtss::tl::Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo)
-    : QObject(), te::plugin::Plugin(pluginInfo), m_wtssDlg(0)
+    : QObject(), te::plugin::CppPlugin(pluginInfo), m_wtssDlg(0)
 {
   te::qt::af::AppCtrlSingleton::getInstance().addListener(this,
                                                           te::qt::af::SENDER);

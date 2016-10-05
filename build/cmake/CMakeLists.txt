@@ -79,7 +79,9 @@ endif()
 
 # Common definitions to all modules
 add_definitions(-DBOOST_ALL_NO_LIB -DBOOST_FILESYSTEM_VERSION=3 -DBOOST_UBLAS_TYPE_CHECK=0)
-
+if(WIN32)
+  add_definitions(-DWTSSTLDLL)
+endif()
 
 # For each CMake version we need to check some policies
 # Note: automatically link executables with qtmain.lib on Windows when it has Qt dependency.
@@ -114,6 +116,9 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER MA
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11")
 endif()
 
+if(MSVC)
+  set(CMAKE_DEBUG_POSTFIX "d")
+endif()
 
 # Enable CTest
 enable_testing()
@@ -141,8 +146,8 @@ find_package(wtss_cxx REQUIRED)
 # add include directory for all targets
 #
 include_directories(${Boost_INCLUDE_DIR})
-include_directories(${terralib_INCLUDE_DIRS})
-include_directories(${WTSS_CXX_INCLUDE_DIR})
+include_directories(${terralib_INCLUDE_DIRS} ${terralib_DIR})
+include_directories(${wtss_cxx_INCLUDE_DIR} ${wtss_cxx_DIR})
 
 
 #
@@ -205,6 +210,9 @@ configure_file(${WTSS_TL_ABSOLUTE_ROOT_DIR}/src/wtss-tl/version.hpp.in
 
 file(COPY ${WTSS_TL_ABSOLUTE_ROOT_DIR}/share/wtss-tl/icons/
     DESTINATION ${CMAKE_BINARY_DIR}/share/wtss-tl/icons)
+
+file(COPY ${WTSS_TL_ABSOLUTE_ROOT_DIR}/share/wtss-tl/plugins/
+    DESTINATION ${CMAKE_BINARY_DIR}/share/wtss-tl/plugins)
 
 install(TARGETS terralib_mod_qt_wtss_plugin
         EXPORT wtss_tl-targets
