@@ -30,18 +30,28 @@
 #include "exception.hpp"
 #include "server_manager.hpp"
 #include "ui_wtss_dialog_form.h"
-#include "wtss_tool.hpp"
 
 // QT
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
 
+//Qwt
+#include <qwt_legend.h>
+
 // Boost
 #include <boost/format.hpp>
 
 // TerraLib
 #include <terralib/qt/widgets/utils/ScopedCursor.h>
+#include <terralib/st/core/timeseries/TimeSeriesIterator.h>
+#include <terralib/qt/widgets/tools/AbstractTool.h>
+#include <terralib/maptools/MarkRendererManager.h>
+#include <terralib/se/Fill.h>
+#include <terralib/se/Mark.h>
+#include <terralib/se/Stroke.h>
+#include <terralib/se/Utils.h>
+#include <terralib/qt/widgets/tools/PointPicker.h>
 
 // STL
 #include <ctime>
@@ -50,20 +60,35 @@
 // wtss.cxx
 #include <wtss-cxx/wtss.hpp>
 
+#include <vector>
+
 wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
     : QDialog(parent, f),
       m_ui(new Ui::wtss_dialog_form),
       dirty(false),
       m_checkServer(0),
       m_checkCoverage(0),
-      m_checkAttribute(0)
+      m_checkAttribute(0),
+      m_mapDisplay(0),
+      m_chartDisplay(0),
+      m_chartStyle(0),
+      m_timeSeriesChart(0),
+      m_timeSeriesVec(0),
+      m_legend(0)
 {
   m_ui->setupUi(this);
+
   this->setWindowTitle(tr("Web Time Series Services"));
+
   m_ui->btnAddServer->setIcon(QIcon::fromTheme("list-add"));
   m_ui->btnRemoveServer->setIcon(QIcon::fromTheme("list-remove"));
   m_ui->btnRefreshServer->setIcon(QIcon::fromTheme("view-refresh"));
   m_ui->m_hideToolButton->setIcon(QIcon("share/wtss-tl/icons/hide.svg"));
+  m_ui->m_hideCoordSToolButton->setIcon(QIcon("share/wtss-tl/icons/hide.svg"));
+
+  define_display();
+
+  define_marker();
 
   srand(time(NULL));
 
@@ -75,7 +100,7 @@ wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
           this, SLOT(onItemChecked(QTreeWidgetItem *)));
   connect(m_ui->btnHelp, SIGNAL(clicked()), this, SLOT(onHelpButtonClicked()));
   connect(m_ui->btnClose, SIGNAL(clicked()), this,
-          SLOT(onCloseButtonClicked()));
+          SLOT(close()));
   connect(m_ui->m_hideToolButton, SIGNAL(clicked()), this,
           SLOT(onHideButtonClicked()));
   connect(m_ui->btnRefreshServer, SIGNAL(clicked()), this,
@@ -86,8 +111,10 @@ wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
           SLOT(onExportGraphClicked()));
   connect(m_ui->btnQuery, SIGNAL(clicked()), this,
           SLOT(onQueryButtonClicked()));
-  connect(m_ui->customPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), this,
-          SLOT(onXAxisRangeChanged(QCPRange)));
+  connect(m_ui->m_hideCoordSToolButton, SIGNAL(clicked()), this,
+          SLOT(onHideCoordSelectedsClicked()));
+  connect(m_ui->m_coordSListWidget, SIGNAL(itemClicked(QListWidgetItem*)),
+          this, SLOT(onAddCoordList(QListWidgetItem*)));
 
   load_settings();
 
@@ -102,22 +129,13 @@ void wtss::tl::wtss_dialog::set_map_display(
   m_mapDisplay = mapDisplay;
 }
 
-void wtss::tl::wtss_dialog::set_wtss_tool()
-{
-  wtss::tl::wtss_tool* tool =
-      new wtss::tl::wtss_tool(m_mapDisplay);
-
-  m_mapDisplay->setCursor(Qt::CrossCursor);
-
-  m_mapDisplay->setCurrentTool(tool);
-}
-
 void wtss::tl::wtss_dialog::do_timeseries_query(
     wtss::cxx::timeseries_query_t query)
 {
+  clearCanvas();
+
   m_ui->latLineEdit->setText(QString::number(query.latitude));
   m_ui->longLineEdit->setText(QString::number(query.longitude));
-  m_ui->customPlot->clearGraphs();
 
   te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
 
@@ -132,7 +150,6 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
   m_checkServer = false;
   m_checkCoverage = false;
   m_checkAttribute = false;
-
 
   for(QJsonObject::iterator it_server = j_object.begin();
       it_server != j_object.end(); ++it_server)
@@ -182,15 +199,14 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
             {
               wtss::cxx::timeseries_query_result_t result =
                   remote.time_series(new_q);
+
               add_result_to_plot(it_server.key(), result);
             }
             catch(const std::exception &e)
             {
-              boost::format err_msg(
-                  "Could not retrieve the time series of the coverage "
-                  "%1%.");
-              throw exception()
-                  << error_description((err_msg % new_q.coverage_name).str());
+              QMessageBox::warning(this, tr("Web Time Series"), tr("The coordinates "
+                                                           "informed are invalid."));
+              return;
             }
           }
           m_checkCoverage = true;
@@ -200,12 +216,10 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
     }
   }
 
-  if(validate_query())
-  {
-    plot_result();
-  }
-  else
-    return;
+  if(!validate_query())
+      return;
+
+  plot_time_series();
 }
 
 void wtss::tl::wtss_dialog::hide_graph(bool check)
@@ -214,7 +228,16 @@ void wtss::tl::wtss_dialog::hide_graph(bool check)
   {
     m_ui->graphFrame->hide();
     m_ui->m_hideToolButton->hide();
+    m_ui->coordSframe->hide();
+    m_ui->m_hideCoordSToolButton->hide();
     wtss_dialog::adjustSize();
+  }
+  else
+  {
+   m_ui->graphFrame->show();
+   m_ui->m_hideToolButton->show();
+   m_ui->coordSframe->show();
+   m_ui->m_hideCoordSToolButton->show();
   }
 }
 
@@ -244,14 +267,14 @@ void wtss::tl::wtss_dialog::onServerAddButtonClicked()
      }
      catch(...)
      {
-        QMessageBox::warning(this, tr("Warning"), tr("An error has occurred, "
+        QMessageBox::warning(this, tr("Web Time Series"), tr("An error has occurred, "
                                                      "please retype the wtss "
                                                      "server address."));
      }
   }
   else
   {
-    QMessageBox::warning(this, tr("Warning"), tr("Please, input a server."));
+    QMessageBox::warning(this, tr("Web Time Series"), tr("Please, input a server."));
   }
 
   dirty = true;
@@ -287,14 +310,14 @@ void wtss::tl::wtss_dialog::onServerRemoveButtonClicked()
        }
        catch(...)
        {
-          QMessageBox::warning(this, tr("Warning"),
+          QMessageBox::warning(this, tr("Web Time Series"),
                                tr("An error has occurred, please try again."));
        }
     }
   }
   else
   {
-     QMessageBox::warning(this, tr("Warning"),
+     QMessageBox::warning(this, tr("Web Time Series"),
                           tr("Please, select a server."));
   }
 
@@ -319,14 +342,14 @@ void wtss::tl::wtss_dialog::onServerRefreshButtonClicked()
     }
     catch(...)
     {
-       QMessageBox::warning(this, tr("Warning"),
+       QMessageBox::warning(this, tr("Web Time Series"),
                             tr("An error has occurred, "
                                "please check server list."));
     }
   }
   else
   {
-     QMessageBox::warning(this, tr("Warning"),
+     QMessageBox::warning(this, tr("Web Time Series"),
                           tr("Please, select a server."));
   }
 
@@ -395,40 +418,60 @@ void wtss::tl::wtss_dialog::onHideButtonClicked()
   }
 }
 
+void wtss::tl::wtss_dialog::onHideCoordSelectedsClicked()
+{
+  if(m_ui->coordSframe->isVisible())
+  {
+    m_ui->coordSframe->hide();
+    m_ui->m_hideCoordSToolButton->setIcon(QIcon("share/wtss-tl/icons/show.svg"));
+  }
+  else
+  {
+    m_ui->coordSframe->show();
+    m_ui->m_hideCoordSToolButton->setIcon(QIcon("share/wtss-tl/icons/hide.svg"));
+  }
+}
+
 void wtss::tl::wtss_dialog::onHelpButtonClicked() {}
-void wtss::tl::wtss_dialog::onCloseButtonClicked() { this->close(); }
+
+void wtss::tl::wtss_dialog::onCloseButtonClicked()
+{
+  clearCanvas();
+  this->close();
+}
+
 void wtss::tl::wtss_dialog::onExportGraphClicked()
 {
-  QCPDataMap *graph_data = m_ui->customPlot->graph()->data();
-  for(int i = 0; i < m_ui->customPlot->graphCount(); ++i)
-  {
-    QString csvFile = QFileDialog::getSaveFileName(
-        this, tr("Save File"),
-        QDir::currentPath() + "/" + m_ui->customPlot->graph(i)->name() + ".csv",
-        "CSV file (*.csv)");
-    if(csvFile.isEmpty()) return;
+//  QCPDataMap *graph_data = m_ui->customPlot->graph()->data();
+//  for(int i = 0; i < m_ui->customPlot->graphCount(); ++i)
+//  {
+//    QString csvFile = QFileDialog::getSaveFileName(
+//        this, tr("Save File"),
+//        QDir::currentPath() + "/" + m_ui->customPlot->graph(i)->name() + ".csv",
+//        "CSV file (*.csv)");
+//    if(csvFile.isEmpty()) return;
 
-    QFileInfo info(csvFile);
+//    QFileInfo info(csvFile);
 
-    if(info.suffix().isEmpty()) csvFile.append(".csv");
+//    if(info.suffix().isEmpty()) csvFile.append(".csv");
 
-    std::ofstream myfile(csvFile.toUtf8().data());
+//    std::ofstream myfile(csvFile.toUtf8().data());
 
-    myfile << "Timeline,Value" << std::endl;
+//    myfile << "Timeline,Value" << std::endl;
 
-    for(auto it = graph_data->begin(); it != graph_data->end(); ++it)
-    {
-      QDateTime date;
+//    for(auto it = graph_data->begin(); it != graph_data->end(); ++it)
+//    {
+//      QDateTime date;
 
-      auto key = it.key();
-      date.setTimeSpec(Qt::UTC);
-      date.setTime_t(key);
-      QString string_date = date.toString("yyyy/MM/dd");
-      auto value = it.value().value;
-      myfile << string_date.toUtf8().data() << "," << value << std::endl;
-    }
-    myfile.close();
-  }
+//      auto key = it.key();
+//      date.setTimeSpec(Qt::UTC);
+//      date.setTime_t(key);
+//      QString string_date = date.toString("yyyy/MM/dd");
+//      auto value = it.value().value;
+//      myfile << string_date.toUtf8().data() << "," << value << std::endl;
+//    }
+//    myfile.close();
+//  }
 }
 
 void wtss::tl::wtss_dialog::onImportGraphClicked()
@@ -439,27 +482,27 @@ void wtss::tl::wtss_dialog::onImportGraphClicked()
 
   if(csvFile.isEmpty()) return;
 
-  QFileInfo file(csvFile);
-  std::ifstream csv(csvFile.toUtf8().data());
+//  QFileInfo file(csvFile);
+//  std::ifstream csv(csvFile.toUtf8().data());
 
-  std::string str;
-  std::getline(csv, str);
-  m_ui->customPlot->addGraph()->setName(file.baseName());
-  int i = 0;
-  while(std::getline(csv, str))
-  {
-    QString qstr = QString::fromUtf8(str.c_str());
-    QStringList fields = qstr.split(',');
-    QDateTime date = QDateTime::fromString(fields.at(0), "yyyy/MM/dd");
-    date.setTimeSpec(Qt::UTC);
-    double value = fields.at(1).toDouble();
-    m_ui->customPlot->graph(m_ui->customPlot->graphCount() - 1)
-        ->addData(date.toTime_t(), value);
-    i++;
-  }
-  m_ui->customPlot->graph(m_ui->customPlot->graphCount() - 1)
-      ->setPen(QPen(random_color()));
-  plot_result();
+//  std::string str;
+//  std::getline(csv, str);
+//  m_ui->customPlot->addGraph()->setName(file.baseName());
+//  int i = 0;
+//  while(std::getline(csv, str))
+//  {
+//    QString qstr = QString::fromUtf8(str.c_str());
+//    QStringList fields = qstr.split(',');
+//    QDateTime date = QDateTime::fromString(fields.at(0), "yyyy/MM/dd");
+//    date.setTimeSpec(Qt::UTC);
+//    double value = fields.at(1).toDouble();
+//    m_ui->customPlot->graph(m_ui->customPlot->graphCount() - 1)
+//        ->addData(date.toTime_t(), value);
+//    i++;
+//  }
+//  m_ui->customPlot->graph(m_ui->customPlot->graphCount() - 1)
+//      ->setPen(QPen(random_color()));
+//  plot_result();
 }
 
 void wtss::tl::wtss_dialog::onQueryButtonClicked()
@@ -469,19 +512,19 @@ void wtss::tl::wtss_dialog::onQueryButtonClicked()
   if(m_ui->latLineEdit->text().isEmpty() &&
      m_ui->longLineEdit->text().isEmpty())
   {
-    QMessageBox::warning(this, tr("Warning"),
+    QMessageBox::warning(this, tr("Web Time Series"),
                          tr("Input the latitude and longitude coordinate."));
     return;
   }
   else if(m_ui->latLineEdit->text().isEmpty())
   {
-    QMessageBox::warning(this, tr("Warning"),
+    QMessageBox::warning(this, tr("Web Time Series"),
                          tr("Input the latitude coordinate."));
     return;
   }
   else if(m_ui->longLineEdit->text().isEmpty())
   {
-    QMessageBox::warning(this, tr("Warning"),
+    QMessageBox::warning(this, tr("Web Time Series"),
                          tr("Input the longitude coordinate."));
     return;
   }
@@ -506,7 +549,7 @@ void wtss::tl::wtss_dialog::load_settings()
   }
   catch(...)
   {
-    QMessageBox::warning(this, tr("Warning"),
+    QMessageBox::warning(this, tr("Web Time Series"),
                          tr("An error has occurred, "
                             "when try to load settings."));
   }
@@ -591,25 +634,17 @@ void wtss::tl::wtss_dialog::add_result_to_plot(
   std::vector<wtss::cxx::queried_attribute_t> attributes =
       result.coverage.queried_attributes;
 
-  QVector<double> timeline(result.coverage.timeline.size(), 0);
-
-  for(int i = 0; i < timeline.size(); ++i)
-  {
-    wtss::cxx::date d = result.coverage.timeline[i];
-    QDateTime start = QDateTime(QDate(d.year, d.month, d.day));
-    start.setTimeSpec(Qt::UTC);
-    timeline[i] = start.toTime_t();
-  }
+  m_legend.clear();
+  m_timeSeriesVec.clear();
 
   for(unsigned int i = 0; i < attributes.size(); i++)
   {
     wtss::cxx::queried_attribute_t attribute = attributes[i];
 
-    m_ui->customPlot->addGraph();
-    QString legend =
-        cv_name + " - " + QString::fromUtf8(attribute.name.c_str());
-    m_ui->customPlot->graph(m_ui->customPlot->graphCount() - 1)
-        ->setName(legend);
+    m_legend.push_back(cv_name + " - "
+                       + QString::fromUtf8(attribute.name.c_str()));
+
+    m_timeSeriesVec.push_back(new te::st::TimeSeries(result.coverage.name));
 
     for(unsigned int j = 0; j < attribute.values.size(); ++j)
     {
@@ -617,12 +652,14 @@ void wtss::tl::wtss_dialog::add_result_to_plot(
           wtss::tl::server_manager::getInstance().getAttribute(
               server_uri, cv_name, QString::fromUtf8(attribute.name.c_str()));
 
-      m_ui->customPlot->graph(i)->addData(
-          timeline[j],
-          j_attribute["scale_factor"].toDouble() * attribute.values[j]);
-    }
+       wtss::cxx::date d = result.coverage.timeline[j];
+       te::dt::DateTime* time =
+           new te::dt::Date(boost::gregorian::date(d.year, d.month, d.day));
 
-    m_ui->customPlot->graph(i)->setPen(QPen(random_color()));
+       double value = attribute.values[j] * j_attribute["scale_factor"].toDouble();
+
+       m_timeSeriesVec.at(i)->add(time,value);
+    }
   }
 }
 
@@ -638,65 +675,23 @@ bool wtss::tl::wtss_dialog::validate_query()
       }
       else
       {
-        QMessageBox::warning(this, tr("Warning"),
+        QMessageBox::warning(this, tr("Web Time Series"),
                              tr("Please, select an attribute."));
         return false;
       }
     }
     else
     {
-      QMessageBox::warning(this, tr("Warning"),
+      QMessageBox::warning(this, tr("Web Time Series"),
                            tr("Please, select a coverage."));
       return false;
     }
   }
   else
   {
-    QMessageBox::warning(this, tr("Warning"), tr("Please, select a server"));
+    QMessageBox::warning(this, tr("Web Time Series"), tr("Please, select a server"));
     return false;
   }
-}
-
-void wtss::tl::wtss_dialog::plot_result()
-{
-  // configuring graph visual
-  m_ui->customPlot->xAxis->setLabel("Timeline");
-  m_ui->customPlot->yAxis->setLabel("Values");
-  // configure bottom axis to show date and time instead of number:
-  m_ui->customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-  m_ui->customPlot->xAxis->setDateTimeFormat("MMM\nyy");
-  // set a more compact font size for bottom and left axis tick labels:
-  m_ui->customPlot->xAxis->setTickLabelFont(QFont(QFont().family(), 8));
-  m_ui->customPlot->yAxis->setTickLabelFont(QFont(QFont().family(), 8));
-  // set a fixed tick-step to one tick per month:
-  m_ui->customPlot->xAxis->setAutoTickStep(false);
-  m_ui->customPlot->xAxis->setTickStep(2628000);
-  m_ui->customPlot->xAxis->setSubTickCount(3);
-  // apply manual tick and tick label for y axis:
-  m_ui->customPlot->yAxis->setAutoTickStep(true);
-  m_ui->customPlot->yAxis->setAutoTickLabels(true);
-  // set axis labels:
-  m_ui->customPlot->xAxis->setLabel("Timeline");
-  m_ui->customPlot->yAxis->setLabel("Values");
-  // make top and right axes visible but without ticks and labels:
-  m_ui->customPlot->xAxis2->setVisible(true);
-  m_ui->customPlot->yAxis2->setVisible(true);
-  m_ui->customPlot->xAxis2->setTicks(false);
-  m_ui->customPlot->yAxis2->setTicks(false);
-  m_ui->customPlot->xAxis2->setTickLabels(false);
-  m_ui->customPlot->yAxis2->setTickLabels(false);
-  // show legend:
-  m_ui->customPlot->legend->setVisible(true);
-  // set interactions
-  m_ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iSelectPlottables |
-                                    QCP::iRangeZoom);
-  m_ui->customPlot->axisRect()->setRangeZoom(Qt::Horizontal);
-  m_ui->customPlot->axisRect()->setRangeDrag(Qt::Horizontal);
-  m_ui->customPlot->rescaleAxes();
-  lowerBound = m_ui->customPlot->xAxis->range().lower;
-  upperBound = m_ui->customPlot->xAxis->range().upper;
-  m_ui->customPlot->xAxis->setRange(lowerBound, lowerBound + 2628000 * 13);
-  m_ui->customPlot->replot();
 }
 
 QColor wtss::tl::wtss_dialog::random_color()
@@ -707,25 +702,149 @@ QColor wtss::tl::wtss_dialog::random_color()
   return QColor(r, g, b);
 }
 
-void wtss::tl::wtss_dialog::onXAxisRangeChanged(QCPRange range)
+void wtss::tl::wtss_dialog::plot_time_series()
 {
-  QCPRange fixedRange(range);
-  if(fixedRange.lower < lowerBound)
+  m_chartDisplay->detachItems(te::qt::widgets::TIMESERIES_CHART);
+
+  if(get_time_series().empty())
+      return;
+
+  for(unsigned int i = 0; i < get_time_series().size(); ++i)
   {
-    fixedRange.lower = lowerBound;
-    fixedRange.upper = lowerBound + range.size();
-    if(fixedRange.upper > upperBound ||
-       qFuzzyCompare(range.size(), upperBound - lowerBound))
-      fixedRange.upper = upperBound;
-    m_ui->customPlot->xAxis->setRange(fixedRange);
+      m_timeSeriesChart = new te::qt::widgets::TimeSeriesChart(
+                  get_time_series().at(i));
+
+      m_timeSeriesChart->setPen(QPen(random_color()));
+      m_timeSeriesChart->attach(m_chartDisplay);
+      m_timeSeriesChart->setTitle(tr(m_legend.at(i).toUtf8().data()));
+
+      m_chartDisplay->adjustDisplay();
+      m_chartDisplay->show();
+      m_chartDisplay->replot();
+      m_chartDisplay->insertLegend(new QwtLegend(), QwtPlot::RightLegend);
   }
-  else if(fixedRange.upper > upperBound)
-  {
-    fixedRange.upper = upperBound;
-    fixedRange.lower = upperBound - range.size();
-    if(fixedRange.lower < lowerBound ||
-       qFuzzyCompare(range.size(), upperBound - lowerBound))
-      fixedRange.lower = lowerBound;
-    m_ui->customPlot->xAxis->setRange(fixedRange);
-  }
+}
+
+std::vector<te::st::TimeSeries *> wtss::tl::wtss_dialog::get_time_series()
+{
+  return m_timeSeriesVec;
+}
+
+void wtss::tl::wtss_dialog::define_display()
+{
+  m_chartStyle = new te::qt::widgets::ChartStyle();
+  m_chartStyle->setTitle(QString::fromUtf8("Web Time Series"));
+  m_chartStyle->setAxisX(QString::fromUtf8("Time"));
+  m_chartStyle->setAxisY(QString::fromUtf8("Value"));
+
+  m_chartDisplay =
+          new te::qt::widgets::ChartDisplay(m_ui->m_timeSeriesFrame,
+                                            QString::fromUtf8("Web Time Series"),
+                                            m_chartStyle);
+
+  QGridLayout* m_layout = new QGridLayout(m_ui->m_timeSeriesFrame);
+  m_layout->addWidget(m_chartDisplay, 0, 0);
+  m_layout->setContentsMargins(0,0,0,0);
+}
+
+void wtss::tl::wtss_dialog::define_marker()
+{
+  te::se::Stroke* stroke = te::se::CreateStroke("#000000", "1");
+  te::se::Fill* fill = te::se::CreateFill("#000000", "1.0");
+  m_marker = te::se::CreateMark("cross", stroke, fill);
+  m_rgbaMarker = te::map::MarkRendererManager::getInstance().render(m_marker, 12);
+}
+
+void wtss::tl::wtss_dialog::onAddCoordList(QListWidgetItem* coordSelected)
+{
+  wtss::cxx::timeseries_query_t query;
+
+  QStringList coord = coordSelected->text().split(",");
+
+  query.longitude = coord.front().toDouble();
+  query.latitude = coord.back().toDouble();
+
+  do_timeseries_query(query);
+
+  addMarker(query.longitude, query.latitude);
+}
+
+void wtss::tl::wtss_dialog::onPointPicked(QPointF &coord)
+{
+  emit pointPicked(coord);
+}
+
+void wtss::tl::wtss_dialog::closeEvent(QCloseEvent *e)
+{
+  clearCanvas();
+
+  emit close();
+}
+
+void wtss::tl::wtss_dialog::onPointPickerToggled(bool checked)
+{
+  if(!checked)
+    return;
+
+  te::qt::widgets::PointPicker* point = new te::qt::widgets::PointPicker(m_mapDisplay, Qt::CrossCursor);
+  m_mapDisplay->setCurrentTool(point);
+
+  connect(point, SIGNAL(pointPicked(QPointF&)), this, SLOT(onGetPointCoordenate(QPointF&)));
+}
+
+void wtss::tl::wtss_dialog::onGetPointCoordenate(QPointF& coord)
+{
+  std::auto_ptr<te::srs::Converter> converter(new te::srs::Converter());
+
+  converter->setSourceSRID(m_mapDisplay->getSRID());
+  converter->setTargetSRID(4326);
+
+  te::gm::Coord2D c;
+
+  converter->convert(coord.x(), coord.y(), c.x, c.y);
+
+  wtss::cxx::timeseries_query_t query;
+
+  query.longitude = c.x;
+  query.latitude = c.y;
+
+  do_timeseries_query(query);
+
+  m_ui->m_coordSListWidget->addItem(QString::number(query.longitude)+","+
+                                    QString::number(query.latitude));
+
+  addMarker(query.longitude, query.latitude);
+
+  wtss_dialog::setModal(false);
+  wtss_dialog::show();
+}
+
+void wtss::tl::wtss_dialog::addMarker(double x, double y)
+{
+  m_mapDisplay->getDisplayPixmap()->fill(Qt::transparent);
+
+  const te::gm::Envelope& env = m_mapDisplay->getExtent();
+
+  te::qt::widgets::Canvas canvas(m_mapDisplay->getDraftPixmap());
+
+  canvas.setWindow(env.m_llx, env.m_lly, env.m_urx, env.m_ury);
+  canvas.setPointPattern(m_rgbaMarker, 12, 12);
+
+  te::gm::Point point;
+  point.setX(x);
+  point.setY(y);
+
+  canvas.setPointColor(te::color::RGBAColor(0,0,0,0));
+  canvas.draw(&point);
+
+  m_mapDisplay->repaint();
+}
+
+void wtss::tl::wtss_dialog::clearCanvas()
+{
+  te::qt::widgets::Canvas canvas(m_mapDisplay->getDraftPixmap());
+
+  canvas.clear();
+
+  m_mapDisplay->refresh();
 }
