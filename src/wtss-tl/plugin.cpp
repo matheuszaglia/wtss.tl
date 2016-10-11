@@ -30,7 +30,6 @@
 #include "plugin.hpp"
 #include "server_manager.hpp"
 #include "wtss_dialog.hpp"
-#include "wtss_tool.hpp"
 
 // QT
 #include <QApplication>
@@ -40,9 +39,7 @@
 #include <terralib/qt/af/Utils.h>
 #include <terralib/qt/af/events/ApplicationEvents.h>
 #include <terralib/qt/af/events/MapEvents.h>
-
 #include <terralib/qt/af/BaseApplication.h>
-
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
 #include <terraview/TerraView.h>
 
@@ -55,6 +52,7 @@ wtss::tl::Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo)
 }
 
 wtss::tl::Plugin::~Plugin() {}
+
 void wtss::tl::Plugin::startup()
 {
   if(m_initialized)
@@ -112,6 +110,7 @@ void wtss::tl::Plugin::shutdown()
   delete m_actionManageServices;
   delete m_timeSeriesAction;
   delete m_wtssToolBar;
+  delete m_wtssDlg;
 
   te::qt::af::AppCtrlSingleton::getInstance().removeToolBar("WTSS Toolbar");
 
@@ -152,8 +151,12 @@ void wtss::tl::Plugin::onActionActivated(bool)
 
 void wtss::tl::Plugin::onServerActionActivated()
 {
-  m_wtssDlg = new wtss::tl::wtss_dialog(
-      te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
+  if(!m_wtssDlg)
+  {
+    m_wtssDlg = new wtss::tl::wtss_dialog(
+                te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
+
+  }
 
   m_wtssDlg->set_map_display(get_map_display());
 
@@ -166,12 +169,26 @@ void wtss::tl::Plugin::onServerActionActivated()
 
 void wtss::tl::Plugin::onActionQueryToggled()
 {
-  m_wtssDlg = new wtss::tl::wtss_dialog(
-     te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
+  if(!m_wtssDlg)
+  {
+    m_wtssDlg = new wtss::tl::wtss_dialog(
+                te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
+  }
 
   m_wtssDlg->set_map_display(get_map_display());
 
-  m_wtssDlg->set_wtss_tool();
+  m_wtssDlg->onPointPickerToggled(true);
+
+  m_wtssDlg->hide_graph(false);
+}
+
+void wtss::tl::Plugin::onClose()
+{
+  if(m_wtssDlg)
+  {
+    delete m_wtssDlg;
+    m_wtssDlg = 0;
+  }
 }
 
 PLUGIN_CALL_BACK_IMPL(wtss::tl::Plugin)

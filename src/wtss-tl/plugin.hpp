@@ -100,6 +100,8 @@ namespace wtss
 
       void onActionActivated(bool);
 
+      void onClose();
+
      private:
       wtss::tl::wtss_dialog* m_wtssDlg;
     };
