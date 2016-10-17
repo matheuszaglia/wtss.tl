@@ -328,7 +328,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Coordinates Selected</string>
+                 <string>Location History</string>
                 </property>
                </widget>
               </item>
