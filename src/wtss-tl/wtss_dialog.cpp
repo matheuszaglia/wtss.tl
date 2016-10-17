@@ -38,13 +38,15 @@
 
 //Qwt
 #include <qwt_legend.h>
+#include <qwt_scale_div.h>
+#include <qwt_scale_widget.h>
+
 
 // Boost
 #include <boost/format.hpp>
 
 // TerraLib
 #include <terralib/qt/widgets/utils/ScopedCursor.h>
-#include <terralib/st/core/timeseries/TimeSeriesIterator.h>
 #include <terralib/qt/widgets/tools/AbstractTool.h>
 #include <terralib/maptools/MarkRendererManager.h>
 #include <terralib/se/Fill.h>
@@ -73,8 +75,7 @@ wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
       m_chartDisplay(0),
       m_chartStyle(0),
       m_timeSeriesChart(0),
-      m_timeSeriesVec(0),
-      m_legend(0)
+      m_timeSeriesVec(0)
 {
   m_ui->setupUi(this);
 
@@ -114,7 +115,12 @@ wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
   connect(m_ui->m_hideCoordSToolButton, SIGNAL(clicked()), this,
           SLOT(onHideCoordSelectedsClicked()));
   connect(m_ui->m_coordSListWidget, SIGNAL(itemClicked(QListWidgetItem*)),
-          this, SLOT(onAddCoordList(QListWidgetItem*)));
+          this, SLOT(onAddCoordToList(QListWidgetItem*)));
+
+
+//  connect(m_chartDisplay->axisWidget(QwtPlot::xBottom), SIGNAL(scaleDivChanged()), this,
+//          SLOT(updateZoom()));
+
 
   load_settings();
 
@@ -197,15 +203,14 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
 
             try
             {
-              wtss::cxx::timeseries_query_result_t result =
-                  remote.time_series(new_q);
-
-              add_result_to_plot(it_server.key(), result);
+              m_result = remote.time_series(new_q);
+              m_lastQueriedServer = it_server.key().toUtf8().data();
+              add_result_to_plot();
             }
             catch(const std::exception &e)
             {
               QMessageBox::warning(this, tr("Web Time Series"), tr("The coordinates "
-                                                           "informed are invalid."));
+                                                                       "informed are invalid."));
               return;
             }
           }
@@ -217,7 +222,7 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
   }
 
   if(!validate_query())
-      return;
+    return;
 
   plot_time_series();
 }
@@ -442,36 +447,50 @@ void wtss::tl::wtss_dialog::onCloseButtonClicked()
 
 void wtss::tl::wtss_dialog::onExportGraphClicked()
 {
-//  QCPDataMap *graph_data = m_ui->customPlot->graph()->data();
-//  for(int i = 0; i < m_ui->customPlot->graphCount(); ++i)
-//  {
-//    QString csvFile = QFileDialog::getSaveFileName(
-//        this, tr("Save File"),
-//        QDir::currentPath() + "/" + m_ui->customPlot->graph(i)->name() + ".csv",
-//        "CSV file (*.csv)");
-//    if(csvFile.isEmpty()) return;
+  if(m_result.query.attributes.empty())
+     return;
 
-//    QFileInfo info(csvFile);
+  QString cv_name(QString::fromUtf8(m_result.coverage.name.c_str()));
 
-//    if(info.suffix().isEmpty()) csvFile.append(".csv");
+  std::vector<wtss::cxx::queried_attribute_t> attributes =
+      m_result.coverage.queried_attributes;
 
-//    std::ofstream myfile(csvFile.toUtf8().data());
+  for(unsigned int i = 0; i < attributes.size(); i++)
+  {
+     wtss::cxx::queried_attribute_t attribute = attributes[i];
 
-//    myfile << "Timeline,Value" << std::endl;
+     QString csvFile = QFileDialog::getSaveFileName(
+                 this, tr("Save File"),
+                 QDir::currentPath() + "/" + attribute.name.c_str() + ".csv",
+                 "CSV file (*.csv)");
 
-//    for(auto it = graph_data->begin(); it != graph_data->end(); ++it)
-//    {
-//      QDateTime date;
+     if(csvFile.isEmpty())
+       return;
 
-//      auto key = it.key();
-//      date.setTimeSpec(Qt::UTC);
-//      date.setTime_t(key);
-//      QString string_date = date.toString("yyyy/MM/dd");
-//      auto value = it.value().value;
-//      myfile << string_date.toUtf8().data() << "," << value << std::endl;
-//    }
-//    myfile.close();
-//  }
+     QFileInfo info(csvFile);
+
+     if(info.suffix().isEmpty())
+       csvFile.append(".csv");
+
+     std::ofstream myfile(csvFile.toUtf8().data());
+
+     myfile << "Timeline,Value" << std::endl;
+
+     for(unsigned int j = 0; j < attribute.values.size(); ++j)
+     {
+       QJsonObject j_attribute =
+           wtss::tl::server_manager::getInstance().getAttribute(
+               QString::fromUtf8(m_lastQueriedServer.c_str()), cv_name, QString::fromUtf8(attribute.name.c_str()));
+
+        wtss::cxx::date d = m_result.coverage.timeline[j];
+
+        double value = attribute.values[j] * j_attribute["scale_factor"].toDouble();
+
+        myfile << d.day << "/" << d.month << "/" << d.year
+               << "," << value << std::endl;
+     }
+     myfile.close();
+  }
 }
 
 void wtss::tl::wtss_dialog::onImportGraphClicked()
@@ -480,29 +499,35 @@ void wtss::tl::wtss_dialog::onImportGraphClicked()
       QFileDialog::getOpenFileName(this, "Select a TimeSeries CSV file",
                                    QDir::currentPath(), "CSV file (*.csv)");
 
-  if(csvFile.isEmpty()) return;
+  if(csvFile.isEmpty())
+    return;
 
-//  QFileInfo file(csvFile);
-//  std::ifstream csv(csvFile.toUtf8().data());
+  QFileInfo file(csvFile);
+  std::ifstream csv(csvFile.toUtf8().data());
 
-//  std::string str;
-//  std::getline(csv, str);
-//  m_ui->customPlot->addGraph()->setName(file.baseName());
-//  int i = 0;
-//  while(std::getline(csv, str))
-//  {
-//    QString qstr = QString::fromUtf8(str.c_str());
-//    QStringList fields = qstr.split(',');
-//    QDateTime date = QDateTime::fromString(fields.at(0), "yyyy/MM/dd");
-//    date.setTimeSpec(Qt::UTC);
-//    double value = fields.at(1).toDouble();
-//    m_ui->customPlot->graph(m_ui->customPlot->graphCount() - 1)
-//        ->addData(date.toTime_t(), value);
-//    i++;
-//  }
-//  m_ui->customPlot->graph(m_ui->customPlot->graphCount() - 1)
-//      ->setPen(QPen(random_color()));
-//  plot_result();
+  std::string str;
+  std::getline(csv, str);
+
+  m_timeSeriesVec.clear();
+
+  m_timeSeriesVec.push_back(new te::st::TimeSeries(file.baseName().toUtf8().data()));
+
+  while(std::getline(csv, str))
+  {
+    QString qstr = QString::fromUtf8(str.c_str());
+    QStringList fields = qstr.split(',');
+    QStringList date = fields.front().split("/");
+
+    te::dt::DateTime* time =
+        new te::dt::Date(boost::gregorian::date(date.at(2).toInt(),
+                                                date.at(1).toInt(),
+                                                date.at(0).toInt()));
+
+    double value = fields.back().toDouble();
+
+    m_timeSeriesVec.back()->add(time, value);
+  }
+  plot_time_series();
 }
 
 void wtss::tl::wtss_dialog::onQueryButtonClicked()
@@ -626,33 +651,28 @@ void wtss::tl::wtss_dialog::add_atributes(QTreeWidgetItem *coverageItem,
   }
 }
 
-void wtss::tl::wtss_dialog::add_result_to_plot(
-    QString server_uri, wtss::cxx::timeseries_query_result_t result)
+void wtss::tl::wtss_dialog::add_result_to_plot()
 {
-  QString cv_name(QString::fromUtf8(result.coverage.name.c_str()));
+  QString cv_name(QString::fromUtf8(m_result.coverage.name.c_str()));
 
   std::vector<wtss::cxx::queried_attribute_t> attributes =
-      result.coverage.queried_attributes;
+      m_result.coverage.queried_attributes;
 
-  m_legend.clear();
   m_timeSeriesVec.clear();
 
   for(unsigned int i = 0; i < attributes.size(); i++)
   {
     wtss::cxx::queried_attribute_t attribute = attributes[i];
 
-    m_legend.push_back(cv_name + " - "
-                       + QString::fromUtf8(attribute.name.c_str()));
-
-    m_timeSeriesVec.push_back(new te::st::TimeSeries(result.coverage.name));
+    m_timeSeriesVec.push_back(new te::st::TimeSeries(attribute.name));
 
     for(unsigned int j = 0; j < attribute.values.size(); ++j)
     {
       QJsonObject j_attribute =
           wtss::tl::server_manager::getInstance().getAttribute(
-              server_uri, cv_name, QString::fromUtf8(attribute.name.c_str()));
+              QString::fromUtf8(m_lastQueriedServer.c_str()), cv_name, QString::fromUtf8(attribute.name.c_str()));
 
-       wtss::cxx::date d = result.coverage.timeline[j];
+       wtss::cxx::date d = m_result.coverage.timeline[j];
        te::dt::DateTime* time =
            new te::dt::Date(boost::gregorian::date(d.year, d.month, d.day));
 
@@ -670,9 +690,7 @@ bool wtss::tl::wtss_dialog::validate_query()
     if(m_checkCoverage)
     {
       if(m_checkAttribute)
-      {
         return true;
-      }
       else
       {
         QMessageBox::warning(this, tr("Web Time Series"),
@@ -716,12 +734,43 @@ void wtss::tl::wtss_dialog::plot_time_series()
 
       m_timeSeriesChart->setPen(QPen(random_color()));
       m_timeSeriesChart->attach(m_chartDisplay);
-      m_timeSeriesChart->setTitle(tr(m_legend.at(i).toUtf8().data()));
+      m_timeSeriesChart->setTitle(tr(get_time_series().at(i)->getId().c_str()));
 
       m_chartDisplay->adjustDisplay();
       m_chartDisplay->show();
       m_chartDisplay->replot();
       m_chartDisplay->insertLegend(new QwtLegend(), QwtPlot::RightLegend);
+  }
+}
+
+void wtss::tl::wtss_dialog::updateZoom()
+{
+  QwtScaleDiv scaleDiv = m_chartDisplay->axisScaleDiv(QwtPlot::xBottom);
+
+  if(scaleDiv.isEmpty())
+      return;
+
+  if(scaleDiv.lowerBound() < m_lowerBound)
+  {
+     scaleDiv.setLowerBound(m_lowerBound);
+     scaleDiv.setUpperBound(m_lowerBound + scaleDiv.range());
+
+     if(scaleDiv.upperBound() > m_upperBound ||
+             qFuzzyCompare(scaleDiv.range(), m_upperBound - m_lowerBound))
+         scaleDiv.setUpperBound(m_upperBound);
+
+     m_chartDisplay->setAxisScaleDiv(QwtPlot::xBottom, scaleDiv);
+  }
+  else if(scaleDiv.upperBound() > m_upperBound)
+  {
+     scaleDiv.setUpperBound(m_upperBound);
+     scaleDiv.setLowerBound(m_upperBound - scaleDiv.range());
+
+     if(scaleDiv.lowerBound() < m_lowerBound ||
+             qFuzzyCompare(scaleDiv.range(), m_upperBound - m_lowerBound))
+         scaleDiv.setLowerBound(m_lowerBound);
+
+     m_chartDisplay->setAxisScaleDiv(QwtPlot::xBottom, scaleDiv);
   }
 }
 
@@ -755,7 +804,7 @@ void wtss::tl::wtss_dialog::define_marker()
   m_rgbaMarker = te::map::MarkRendererManager::getInstance().render(m_marker, 12);
 }
 
-void wtss::tl::wtss_dialog::onAddCoordList(QListWidgetItem* coordSelected)
+void wtss::tl::wtss_dialog::onAddCoordToList(QListWidgetItem* coordSelected)
 {
   wtss::cxx::timeseries_query_t query;
 

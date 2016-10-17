@@ -96,6 +96,8 @@ namespace wtss
 
       void onPointPickerToggled(bool checked);
 
+      void updateZoom();
+
      protected slots:
 
       void onServerAddButtonClicked();
@@ -120,7 +122,7 @@ namespace wtss
 
       void onQueryButtonClicked();
 
-      void onAddCoordList(QListWidgetItem* coordSelected);
+      void onAddCoordToList(QListWidgetItem* coordSelected);
 
       void onGetPointCoordenate(QPointF &coord);
 
@@ -144,8 +146,7 @@ namespace wtss
 
       void add_atributes(QTreeWidgetItem* coverageItem, QJsonObject j_coverage);
 
-      void add_result_to_plot(QString server_uri,
-                              wtss::cxx::timeseries_query_result_t result);
+      void add_result_to_plot();
 
       bool validate_query();
 
@@ -171,6 +172,12 @@ namespace wtss
 
       bool m_checkAttribute;
 
+      double m_lowerBound;
+
+      double m_upperBound;
+
+      std::string m_lastQueriedServer;
+
       QJsonObject j_config;
 
       te::qt::widgets::MapDisplay* m_mapDisplay;
@@ -183,7 +190,7 @@ namespace wtss
 
       std::vector<te::st::TimeSeries*> m_timeSeriesVec;
 
-      std::vector<QString> m_legend;
+      wtss::cxx::timeseries_query_result_t m_result;
 
       te::color::RGBAColor** m_rgbaMarker;
 
