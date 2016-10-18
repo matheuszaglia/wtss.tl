@@ -474,15 +474,18 @@ void wtss::tl::wtss_dialog::onQueryButtonClicked()
   query.latitude = m_ui->latLineEdit->text().toDouble();
   query.longitude = m_ui->longLineEdit->text().toDouble();
 
-//  QDate startDate = m_ui->m_startDateEdit->date();
-//  QDate endDate = m_ui->m_endDateEdit->date();
+  QDate startDate = m_ui->m_startDateEdit->date();
+  QDate endDate = m_ui->m_endDateEdit->date();
 
-//  if(!startDate.operator <=(endDate))
-//  {
-//    QMessageBox::warning(this, tr("Web Time Series"),
-//                         tr("The date informed is invalid."));
-//    return;
-//  }
+  if(!startDate.operator <=(endDate))
+  {
+    QMessageBox::warning(this, tr("Web Time Series"),
+                         tr("The date informed is invalid."));
+    return;
+  }
+
+  wtss::tl::server_manager::getInstance().addDateFilter(startDate.toString("dd/MM/yyyy"),
+                                                        endDate.toString("dd/MM/yyyy"));
 
   do_timeseries_query(query);
 }
@@ -572,6 +575,16 @@ void wtss::tl::wtss_dialog::load_settings()
      for(QJsonObject::iterator it = j_config.begin();
          it != j_config.end(); ++it)
        add_server(it.key());
+
+     QString startDate = wtss::tl::server_manager::getInstance().
+             getDateFilter().find("start_date").value().toString();
+
+     QString endDate = wtss::tl::server_manager::getInstance().
+             getDateFilter().find("end_date").value().toString();
+
+     m_ui->m_startDateEdit->setDate(QDate::fromString(startDate, "dd/MM/yyyy"));
+
+     m_ui->m_endDateEdit->setDate(QDate::fromString(endDate, "dd/MM/yyyy"));
   }
   catch(...)
   {

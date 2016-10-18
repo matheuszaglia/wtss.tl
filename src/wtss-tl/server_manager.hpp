@@ -55,6 +55,11 @@ namespace wtss
       void removeServer(const QString &server_uri);
       void refreshServer(const QString &server_uri);
 
+      void addDateFilter(const QString startDate,
+                         const QString endDate);
+
+      QJsonObject getDateFilter();
+
       QJsonObject getAttribute(const QString &server_uri,
                                const QString &cv_name,
                                const QString &attribute);

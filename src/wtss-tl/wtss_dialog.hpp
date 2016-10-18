@@ -86,6 +86,8 @@ namespace wtss
 
       void hide_graph(bool check);
 
+      std::vector<te::st::TimeSeries*> get_time_series();
+
      public slots:
 
       void onPointPickerToggled(bool checked);
@@ -143,7 +145,6 @@ namespace wtss
 
       void convert_to_time_series(cxx::timeseries_query_result_t result);
 
-      std::vector<te::st::TimeSeries*> get_time_series();
 
       void plot_time_series();
 
