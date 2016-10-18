@@ -36,12 +36,6 @@
 #include <QInputDialog>
 #include <QMessageBox>
 
-//Qwt
-#include <qwt_legend.h>
-#include <qwt_scale_div.h>
-#include <qwt_scale_widget.h>
-
-
 // Boost
 #include <boost/format.hpp>
 
@@ -61,8 +55,6 @@
 
 // wtss.cxx
 #include <wtss-cxx/wtss.hpp>
-
-#include <vector>
 
 wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
     : QDialog(parent, f),
@@ -117,10 +109,8 @@ wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
   connect(m_ui->m_coordSListWidget, SIGNAL(itemClicked(QListWidgetItem*)),
           this, SLOT(onAddCoordToList(QListWidgetItem*)));
 
-
 //  connect(m_chartDisplay->axisWidget(QwtPlot::xBottom), SIGNAL(scaleDivChanged()), this,
-//          SLOT(updateZoom()));
-
+//          SLOT(onUpdateZoom()));
 
   load_settings();
 
@@ -133,98 +123,6 @@ void wtss::tl::wtss_dialog::set_map_display(
     te::qt::widgets::MapDisplay *mapDisplay)
 {
   m_mapDisplay = mapDisplay;
-}
-
-void wtss::tl::wtss_dialog::do_timeseries_query(
-    wtss::cxx::timeseries_query_t query)
-{
-  clearCanvas();
-
-  m_ui->latLineEdit->setText(QString::number(query.latitude));
-  m_ui->longLineEdit->setText(QString::number(query.longitude));
-
-  te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
-
-  QJsonObject j_object =
-      wtss::tl::server_manager::getInstance().loadSettings().object();
-
-  if(j_object.isEmpty())
-      return;
-
-  QJsonObject j_server;
-
-  m_checkServer = false;
-  m_checkCoverage = false;
-  m_checkAttribute = false;
-
-  for(QJsonObject::iterator it_server = j_object.begin();
-      it_server != j_object.end(); ++it_server)
-  {
-    j_server = it_server.value().toObject();
-
-    if(j_server.find("active").value().toBool())
-    {
-      std::string server_uri = it_server.key().toStdString();
-
-      QJsonObject j_coverages = j_server["coverages"].toObject();
-
-      for(QJsonObject::iterator it_coverages = j_coverages.begin();
-          it_coverages != j_coverages.end(); it_coverages++)
-      {
-        if(it_coverages.value().toObject().find("active").value().toBool())
-        {
-          wtss::cxx::timeseries_query_t new_q;
-
-          new_q.latitude = query.latitude;
-          new_q.longitude = query.longitude;
-          new_q.coverage_name = it_coverages.key().toUtf8().data();
-
-          QJsonObject j_attributes = it_coverages.value()
-                                         .toObject()
-                                         .find("attributes")
-                                         .value()
-                                         .toObject();
-
-          for(QJsonObject::iterator it_attributes = j_attributes.begin();
-              it_attributes != j_attributes.end(); it_attributes++)
-          {
-            QJsonObject j_attribute = it_attributes.value().toObject();
-
-            if(j_attribute["active"].toBool() == true)
-            {
-              new_q.attributes.push_back(it_attributes.key().toUtf8().data());
-              m_checkAttribute = true;
-            }
-          }
-
-          if(new_q.attributes.size() > 0)
-          {
-            wtss::cxx::client remote(server_uri);
-
-            try
-            {
-              m_result = remote.time_series(new_q);
-              m_lastQueriedServer = it_server.key().toUtf8().data();
-              add_result_to_plot();
-            }
-            catch(const std::exception &e)
-            {
-              QMessageBox::warning(this, tr("Web Time Series"), tr("The coordinates "
-                                                                       "informed are invalid."));
-              return;
-            }
-          }
-          m_checkCoverage = true;
-        }
-      }
-      m_checkServer = true;
-    }
-  }
-
-  if(!validate_query())
-    return;
-
-  plot_time_series();
 }
 
 void wtss::tl::wtss_dialog::hide_graph(bool check)
@@ -246,6 +144,17 @@ void wtss::tl::wtss_dialog::hide_graph(bool check)
   }
 }
 
+void wtss::tl::wtss_dialog::onPointPickerToggled(bool checked)
+{
+  if(!checked)
+    return;
+
+  te::qt::widgets::PointPicker* point = new te::qt::widgets::PointPicker(m_mapDisplay, Qt::CrossCursor);
+  m_mapDisplay->setCurrentTool(point);
+
+  connect(point, SIGNAL(pointPicked(QPointF&)), this, SLOT(onGetPointCoordinate(QPointF&)));
+}
+
 void wtss::tl::wtss_dialog::onServerAddButtonClicked()
 {
   dirty = false;
@@ -253,10 +162,16 @@ void wtss::tl::wtss_dialog::onServerAddButtonClicked()
   QInputDialog *inputDialog = new QInputDialog();
   inputDialog->setOptions(QInputDialog::NoButtons);
 
-  bool ok;
+  bool accept;
 
   QString uri = inputDialog->getText(NULL, "Add Server", "Server URI:",
-                                     QLineEdit::Normal, "", &ok);
+                                     QLineEdit::Normal, "", &accept);
+  if(!accept)
+  {
+    dirty = true;
+    return;
+  }
+
   if(!uri.isEmpty())
   {
      te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
@@ -310,7 +225,9 @@ void wtss::tl::wtss_dialog::onServerRemoveButtonClicked()
 
           delete m_ui->m_serverTreeWidget->currentItem();
 
-          QMessageBox::information(this, tr(""),
+          m_chartDisplay->detachItems(te::qt::widgets::TIMESERIES_CHART);
+
+          QMessageBox::information(this, tr("Web Time Series"),
                                    tr("The server was removed with success."));
        }
        catch(...)
@@ -441,8 +358,45 @@ void wtss::tl::wtss_dialog::onHelpButtonClicked() {}
 
 void wtss::tl::wtss_dialog::onCloseButtonClicked()
 {
-  clearCanvas();
+  clear_canvas();
   this->close();
+}
+
+void wtss::tl::wtss_dialog::onImportGraphClicked()
+{
+  QString csvFile =
+      QFileDialog::getOpenFileName(this, "Select a TimeSeries CSV file",
+                                   QDir::currentPath(), "CSV file (*.csv)");
+
+  if(csvFile.isEmpty())
+    return;
+
+  QFileInfo file(csvFile);
+  std::ifstream csv(csvFile.toUtf8().data());
+
+  std::string str;
+  std::getline(csv, str);
+
+  m_timeSeriesVec.clear();
+
+  m_timeSeriesVec.push_back(new te::st::TimeSeries(file.baseName().toUtf8().data()));
+
+  while(std::getline(csv, str))
+  {
+    QString qstr = QString::fromUtf8(str.c_str());
+    QStringList fields = qstr.split(',');
+    QStringList date = fields.front().split("/");
+
+    te::dt::DateTime* time =
+        new te::dt::Date(boost::gregorian::date(date.at(2).toInt(),
+                                                date.at(1).toInt(),
+                                                date.at(0).toInt()));
+
+    double value = fields.back().toDouble();
+
+    m_timeSeriesVec.back()->add(time, value);
+  }
+  plot_time_series();
 }
 
 void wtss::tl::wtss_dialog::onExportGraphClicked()
@@ -493,43 +447,6 @@ void wtss::tl::wtss_dialog::onExportGraphClicked()
   }
 }
 
-void wtss::tl::wtss_dialog::onImportGraphClicked()
-{
-  QString csvFile =
-      QFileDialog::getOpenFileName(this, "Select a TimeSeries CSV file",
-                                   QDir::currentPath(), "CSV file (*.csv)");
-
-  if(csvFile.isEmpty())
-    return;
-
-  QFileInfo file(csvFile);
-  std::ifstream csv(csvFile.toUtf8().data());
-
-  std::string str;
-  std::getline(csv, str);
-
-  m_timeSeriesVec.clear();
-
-  m_timeSeriesVec.push_back(new te::st::TimeSeries(file.baseName().toUtf8().data()));
-
-  while(std::getline(csv, str))
-  {
-    QString qstr = QString::fromUtf8(str.c_str());
-    QStringList fields = qstr.split(',');
-    QStringList date = fields.front().split("/");
-
-    te::dt::DateTime* time =
-        new te::dt::Date(boost::gregorian::date(date.at(2).toInt(),
-                                                date.at(1).toInt(),
-                                                date.at(0).toInt()));
-
-    double value = fields.back().toDouble();
-
-    m_timeSeriesVec.back()->add(time, value);
-  }
-  plot_time_series();
-}
-
 void wtss::tl::wtss_dialog::onQueryButtonClicked()
 {
   wtss::cxx::timeseries_query_t query;
@@ -553,12 +470,96 @@ void wtss::tl::wtss_dialog::onQueryButtonClicked()
                          tr("Input the longitude coordinate."));
     return;
   }
-  else
+
+  query.latitude = m_ui->latLineEdit->text().toDouble();
+  query.longitude = m_ui->longLineEdit->text().toDouble();
+
+//  QDate startDate = m_ui->m_startDateEdit->date();
+//  QDate endDate = m_ui->m_endDateEdit->date();
+
+//  if(!startDate.operator <=(endDate))
+//  {
+//    QMessageBox::warning(this, tr("Web Time Series"),
+//                         tr("The date informed is invalid."));
+//    return;
+//  }
+
+  do_timeseries_query(query);
+}
+
+void wtss::tl::wtss_dialog::onAddCoordToList(QListWidgetItem* coordSelected)
+{
+  wtss::cxx::timeseries_query_t query;
+
+  QStringList coord = coordSelected->text().split(",");
+
+  query.longitude = coord.front().toDouble();
+  query.latitude = coord.back().toDouble();
+
+  do_timeseries_query(query);
+
+  add_marker(query.longitude, query.latitude);
+}
+
+void wtss::tl::wtss_dialog::onGetPointCoordinate(QPointF& coord)
+{
+  std::auto_ptr<te::srs::Converter> converter(new te::srs::Converter());
+
+  converter->setSourceSRID(m_mapDisplay->getSRID());
+  converter->setTargetSRID(4326);
+
+  te::gm::Coord2D c;
+
+  converter->convert(coord.x(), coord.y(), c.x, c.y);
+
+  wtss::cxx::timeseries_query_t query;
+
+  query.longitude = c.x;
+  query.latitude = c.y;
+
+  if(m_ui->m_serverTreeWidget->topLevelItemCount() > 0)
   {
-    query.latitude = m_ui->latLineEdit->text().toDouble();
-    query.longitude = m_ui->longLineEdit->text().toDouble();
-    do_timeseries_query(query);
+     do_timeseries_query(query);
+
+     m_ui->m_coordSListWidget->addItem(QString::number(query.longitude)+","+
+                                        QString::number(query.latitude));
+
+     add_marker(query.longitude, query.latitude);
   }
+
+  wtss_dialog::setModal(false);
+  wtss_dialog::show();
+}
+
+void wtss::tl::wtss_dialog::onUpdateZoom()
+{
+//  QwtScaleDiv scaleDiv = m_chartDisplay->axisScaleDiv(QwtPlot::xBottom);
+
+//  if(scaleDiv.isEmpty())
+//      return;
+
+//  if(scaleDiv.lowerBound() < m_lowerBound)
+//  {
+//     scaleDiv.setLowerBound(m_lowerBound);
+//     scaleDiv.setUpperBound(m_lowerBound + scaleDiv.range());
+
+//     if(scaleDiv.upperBound() > m_upperBound ||
+//             qFuzzyCompare(scaleDiv.range(), m_upperBound - m_lowerBound))
+//         scaleDiv.setUpperBound(m_upperBound);
+
+//     m_chartDisplay->setAxisScaleDiv(QwtPlot::xBottom, scaleDiv);
+//  }
+//  else if(scaleDiv.upperBound() > m_upperBound)
+//  {
+//     scaleDiv.setUpperBound(m_upperBound);
+//     scaleDiv.setLowerBound(m_upperBound - scaleDiv.range());
+
+//     if(scaleDiv.lowerBound() < m_lowerBound ||
+//             qFuzzyCompare(scaleDiv.range(), m_upperBound - m_lowerBound))
+//         scaleDiv.setLowerBound(m_lowerBound);
+
+//     m_chartDisplay->setAxisScaleDiv(QwtPlot::xBottom, scaleDiv);
+//  }
 }
 
 void wtss::tl::wtss_dialog::load_settings()
@@ -651,38 +652,6 @@ void wtss::tl::wtss_dialog::add_atributes(QTreeWidgetItem *coverageItem,
   }
 }
 
-void wtss::tl::wtss_dialog::add_result_to_plot()
-{
-  QString cv_name(QString::fromUtf8(m_result.coverage.name.c_str()));
-
-  std::vector<wtss::cxx::queried_attribute_t> attributes =
-      m_result.coverage.queried_attributes;
-
-  m_timeSeriesVec.clear();
-
-  for(unsigned int i = 0; i < attributes.size(); i++)
-  {
-    wtss::cxx::queried_attribute_t attribute = attributes[i];
-
-    m_timeSeriesVec.push_back(new te::st::TimeSeries(attribute.name));
-
-    for(unsigned int j = 0; j < attribute.values.size(); ++j)
-    {
-      QJsonObject j_attribute =
-          wtss::tl::server_manager::getInstance().getAttribute(
-              QString::fromUtf8(m_lastQueriedServer.c_str()), cv_name, QString::fromUtf8(attribute.name.c_str()));
-
-       wtss::cxx::date d = m_result.coverage.timeline[j];
-       te::dt::DateTime* time =
-           new te::dt::Date(boost::gregorian::date(d.year, d.month, d.day));
-
-       double value = attribute.values[j] * j_attribute["scale_factor"].toDouble();
-
-       m_timeSeriesVec.at(i)->add(time,value);
-    }
-  }
-}
-
 bool wtss::tl::wtss_dialog::validate_query()
 {
   if(m_checkServer)
@@ -712,12 +681,136 @@ bool wtss::tl::wtss_dialog::validate_query()
   }
 }
 
-QColor wtss::tl::wtss_dialog::random_color()
+void wtss::tl::wtss_dialog::do_timeseries_query(
+    wtss::cxx::timeseries_query_t query)
 {
-  int r = rand() % 255;
-  int g = rand() % 255;
-  int b = rand() % 255;
-  return QColor(r, g, b);
+  clear_canvas();
+
+  m_ui->latLineEdit->setText(QString::number(query.latitude));
+  m_ui->longLineEdit->setText(QString::number(query.longitude));
+
+  te::qt::widgets::ScopedCursor c(Qt::WaitCursor);
+
+  QJsonObject j_object =
+      wtss::tl::server_manager::getInstance().loadSettings().object();
+
+  if(j_object.isEmpty())
+    return;
+
+  QJsonObject j_server;
+
+  m_checkServer = false;
+  m_checkCoverage = false;
+  m_checkAttribute = false;
+
+  for(QJsonObject::iterator it_server = j_object.begin();
+      it_server != j_object.end(); ++it_server)
+  {
+    j_server = it_server.value().toObject();
+
+    if(j_server.find("active").value().toBool())
+    {
+      std::string server_uri = it_server.key().toStdString();
+
+      QJsonObject j_coverages = j_server["coverages"].toObject();
+
+      for(QJsonObject::iterator it_coverages = j_coverages.begin();
+          it_coverages != j_coverages.end(); it_coverages++)
+      {
+        if(it_coverages.value().toObject().find("active").value().toBool())
+        {
+          wtss::cxx::timeseries_query_t new_q;
+
+          new_q.latitude = query.latitude;
+          new_q.longitude = query.longitude;
+          new_q.coverage_name = it_coverages.key().toUtf8().data();
+
+          QJsonObject j_attributes = it_coverages.value()
+                                         .toObject()
+                                         .find("attributes")
+                                         .value()
+                                         .toObject();
+
+          for(QJsonObject::iterator it_attributes = j_attributes.begin();
+              it_attributes != j_attributes.end(); it_attributes++)
+          {
+            QJsonObject j_attribute = it_attributes.value().toObject();
+
+            if(j_attribute["active"].toBool() == true)
+            {
+              new_q.attributes.push_back(it_attributes.key().toUtf8().data());
+              m_checkAttribute = true;
+            }
+          }
+
+          if(new_q.attributes.size() > 0)
+          {
+            wtss::cxx::client remote(server_uri);
+
+            try
+            {
+              m_result = remote.time_series(new_q);
+              m_lastQueriedServer = it_server.key().toUtf8().data();
+              convert_to_time_series(m_result);
+            }
+            catch(const std::exception &e)
+            {
+              QMessageBox::warning(this, tr("Web Time Series"), tr("The coordinates "
+                                                                       "informed are invalid."));
+              return;
+            }
+          }
+          m_checkCoverage = true;
+        }
+      }
+      m_checkServer = true;
+    }
+  }
+
+  if(!validate_query())
+  {
+    m_chartDisplay->detachItems(te::qt::widgets::TIMESERIES_CHART);
+    return;
+  }
+
+  plot_time_series();
+}
+
+void wtss::tl::wtss_dialog::convert_to_time_series(wtss::cxx::timeseries_query_result_t result)
+{
+  QString cv_name(QString::fromUtf8(result.coverage.name.c_str()));
+
+  std::vector<wtss::cxx::queried_attribute_t> attributes =
+      result.coverage.queried_attributes;
+
+  m_timeSeriesVec.clear();
+
+  for(unsigned int i = 0; i < attributes.size(); i++)
+  {
+    wtss::cxx::queried_attribute_t attribute = attributes[i];
+
+    m_timeSeriesVec.push_back(new te::st::TimeSeries(attribute.name));
+
+    for(unsigned int j = 0; j < attribute.values.size(); ++j)
+    {
+      QJsonObject j_attribute =
+          wtss::tl::server_manager::getInstance().getAttribute(
+              QString::fromUtf8(m_lastQueriedServer.c_str()), cv_name, QString::fromUtf8(attribute.name.c_str()));
+
+       wtss::cxx::date d = result.coverage.timeline[j];
+       te::dt::DateTime* time =
+           new te::dt::Date(boost::gregorian::date(d.year, d.month, d.day));
+
+       double value = attribute.values[j] * j_attribute["scale_factor"].toDouble();
+
+       m_timeSeriesVec.at(i)->add(time,value);
+    }
+  }
+}
+
+std::vector<te::st::TimeSeries *> wtss::tl::wtss_dialog::get_time_series()
+{
+  return m_timeSeriesVec;
 }
 
 void wtss::tl::wtss_dialog::plot_time_series()
@@ -739,51 +832,14 @@ void wtss::tl::wtss_dialog::plot_time_series()
       m_chartDisplay->adjustDisplay();
       m_chartDisplay->show();
       m_chartDisplay->replot();
-      m_chartDisplay->insertLegend(new QwtLegend(), QwtPlot::RightLegend);
   }
-}
-
-void wtss::tl::wtss_dialog::updateZoom()
-{
-  QwtScaleDiv scaleDiv = m_chartDisplay->axisScaleDiv(QwtPlot::xBottom);
-
-  if(scaleDiv.isEmpty())
-      return;
-
-  if(scaleDiv.lowerBound() < m_lowerBound)
-  {
-     scaleDiv.setLowerBound(m_lowerBound);
-     scaleDiv.setUpperBound(m_lowerBound + scaleDiv.range());
-
-     if(scaleDiv.upperBound() > m_upperBound ||
-             qFuzzyCompare(scaleDiv.range(), m_upperBound - m_lowerBound))
-         scaleDiv.setUpperBound(m_upperBound);
-
-     m_chartDisplay->setAxisScaleDiv(QwtPlot::xBottom, scaleDiv);
-  }
-  else if(scaleDiv.upperBound() > m_upperBound)
-  {
-     scaleDiv.setUpperBound(m_upperBound);
-     scaleDiv.setLowerBound(m_upperBound - scaleDiv.range());
-
-     if(scaleDiv.lowerBound() < m_lowerBound ||
-             qFuzzyCompare(scaleDiv.range(), m_upperBound - m_lowerBound))
-         scaleDiv.setLowerBound(m_lowerBound);
-
-     m_chartDisplay->setAxisScaleDiv(QwtPlot::xBottom, scaleDiv);
-  }
-}
-
-std::vector<te::st::TimeSeries *> wtss::tl::wtss_dialog::get_time_series()
-{
-  return m_timeSeriesVec;
 }
 
 void wtss::tl::wtss_dialog::define_display()
 {
   m_chartStyle = new te::qt::widgets::ChartStyle();
   m_chartStyle->setTitle(QString::fromUtf8("Web Time Series"));
-  m_chartStyle->setAxisX(QString::fromUtf8("Time"));
+  m_chartStyle->setAxisX(QString::fromUtf8("Timeline"));
   m_chartStyle->setAxisY(QString::fromUtf8("Value"));
 
   m_chartDisplay =
@@ -804,71 +860,12 @@ void wtss::tl::wtss_dialog::define_marker()
   m_rgbaMarker = te::map::MarkRendererManager::getInstance().render(m_marker, 12);
 }
 
-void wtss::tl::wtss_dialog::onAddCoordToList(QListWidgetItem* coordSelected)
-{
-  wtss::cxx::timeseries_query_t query;
-
-  QStringList coord = coordSelected->text().split(",");
-
-  query.longitude = coord.front().toDouble();
-  query.latitude = coord.back().toDouble();
-
-  do_timeseries_query(query);
-
-  addMarker(query.longitude, query.latitude);
-}
-
-void wtss::tl::wtss_dialog::onPointPicked(QPointF &coord)
+void wtss::tl::wtss_dialog::point_picked(QPointF &coord)
 {
   emit pointPicked(coord);
 }
 
-void wtss::tl::wtss_dialog::closeEvent(QCloseEvent *e)
-{
-  clearCanvas();
-
-  emit close();
-}
-
-void wtss::tl::wtss_dialog::onPointPickerToggled(bool checked)
-{
-  if(!checked)
-    return;
-
-  te::qt::widgets::PointPicker* point = new te::qt::widgets::PointPicker(m_mapDisplay, Qt::CrossCursor);
-  m_mapDisplay->setCurrentTool(point);
-
-  connect(point, SIGNAL(pointPicked(QPointF&)), this, SLOT(onGetPointCoordenate(QPointF&)));
-}
-
-void wtss::tl::wtss_dialog::onGetPointCoordenate(QPointF& coord)
-{
-  std::auto_ptr<te::srs::Converter> converter(new te::srs::Converter());
-
-  converter->setSourceSRID(m_mapDisplay->getSRID());
-  converter->setTargetSRID(4326);
-
-  te::gm::Coord2D c;
-
-  converter->convert(coord.x(), coord.y(), c.x, c.y);
-
-  wtss::cxx::timeseries_query_t query;
-
-  query.longitude = c.x;
-  query.latitude = c.y;
-
-  do_timeseries_query(query);
-
-  m_ui->m_coordSListWidget->addItem(QString::number(query.longitude)+","+
-                                    QString::number(query.latitude));
-
-  addMarker(query.longitude, query.latitude);
-
-  wtss_dialog::setModal(false);
-  wtss_dialog::show();
-}
-
-void wtss::tl::wtss_dialog::addMarker(double x, double y)
+void wtss::tl::wtss_dialog::add_marker(double x, double y)
 {
   m_mapDisplay->getDisplayPixmap()->fill(Qt::transparent);
 
@@ -889,11 +886,30 @@ void wtss::tl::wtss_dialog::addMarker(double x, double y)
   m_mapDisplay->repaint();
 }
 
-void wtss::tl::wtss_dialog::clearCanvas()
+QColor wtss::tl::wtss_dialog::random_color()
+{
+  int r = rand() % 255;
+  int g = rand() % 255;
+  int b = rand() % 255;
+  return QColor(r, g, b);
+}
+
+void wtss::tl::wtss_dialog::clear_canvas()
 {
   te::qt::widgets::Canvas canvas(m_mapDisplay->getDraftPixmap());
 
   canvas.clear();
 
   m_mapDisplay->refresh();
+}
+
+void wtss::tl::wtss_dialog::closeEvent(QCloseEvent *e)
+{
+  m_chartDisplay->detachItems(te::qt::widgets::TIMESERIES_CHART);
+
+  m_ui->m_coordSListWidget->clear();
+
+  clear_canvas();
+
+  emit close();
 }

@@ -24,6 +24,9 @@
           <layout class="QGridLayout" name="gridLayout_8">
            <item row="0" column="0">
             <widget class="QToolButton" name="m_hideToolButton">
+             <property name="toolTip">
+              <string>Hide/Show</string>
+             </property>
              <property name="text">
               <string/>
              </property>
@@ -69,6 +72,9 @@
                <layout class="QGridLayout" name="gridLayout_2">
                 <item row="0" column="0">
                  <widget class="QTreeWidget" name="m_serverTreeWidget">
+                  <property name="toolTip">
+                   <string>Services</string>
+                  </property>
                   <column>
                    <property name="text">
                     <string>Server</string>
@@ -92,6 +98,9 @@
                       <height>32</height>
                      </size>
                     </property>
+                    <property name="toolTip">
+                     <string>Add Server</string>
+                    </property>
                     <property name="text">
                      <string/>
                     </property>
@@ -104,6 +113,9 @@
                       <width>32</width>
                       <height>32</height>
                      </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>Refresh Server</string>
                     </property>
                     <property name="text">
                      <string/>
@@ -130,6 +142,9 @@
                       <width>32</width>
                       <height>32</height>
                      </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>Remove Server</string>
                     </property>
                     <property name="text">
                      <string/>
@@ -187,17 +202,28 @@
                  </widget>
                 </item>
                 <item row="0" column="10">
-                 <widget class="QDateEdit" name="endDateEdit"/>
+                 <widget class="QDateEdit" name="m_endDateEdit">
+                  <property name="toolTip">
+                   <string>End Date</string>
+                  </property>
+                 </widget>
                 </item>
                 <item row="0" column="1">
                  <widget class="QPushButton" name="btnExport">
+                  <property name="toolTip">
+                   <string>Export Time Series</string>
+                  </property>
                   <property name="text">
                    <string>Export</string>
                   </property>
                  </widget>
                 </item>
                 <item row="0" column="8">
-                 <widget class="QDateEdit" name="startDateEdit"/>
+                 <widget class="QDateEdit" name="m_startDateEdit">
+                  <property name="toolTip">
+                   <string>Start Date</string>
+                  </property>
+                 </widget>
                 </item>
                 <item row="0" column="11">
                  <widget class="QPushButton" name="btnQuery">
@@ -206,6 +232,9 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>Query</string>
                   </property>
                   <property name="text">
                    <string>Query</string>
@@ -243,6 +272,9 @@
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="toolTip">
+                   <string>Current Longitude</string>
+                  </property>
                  </widget>
                 </item>
                 <item row="0" column="4">
@@ -252,6 +284,9 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>Current Latitude</string>
                   </property>
                  </widget>
                 </item>
@@ -270,6 +305,9 @@
                 </item>
                 <item row="0" column="0">
                  <widget class="QPushButton" name="btnImport">
+                  <property name="toolTip">
+                   <string>Import Time Series</string>
+                  </property>
                   <property name="text">
                    <string>Import</string>
                   </property>
@@ -285,7 +323,11 @@
                </layout>
               </item>
               <item row="0" column="0">
-               <widget class="QFrame" name="m_timeSeriesFrame"/>
+               <widget class="QFrame" name="m_timeSeriesFrame">
+                <property name="toolTip">
+                 <string>Time Series</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -335,7 +377,11 @@
               <item row="1" column="0">
                <layout class="QGridLayout" name="gridLayout_11">
                 <item row="0" column="0">
-                 <widget class="QListWidget" name="m_coordSListWidget"/>
+                 <widget class="QListWidget" name="m_coordSListWidget">
+                  <property name="toolTip">
+                   <string>Location History</string>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </item>
@@ -346,6 +392,9 @@
          </item>
          <item row="0" column="1">
           <widget class="QToolButton" name="m_hideCoordSToolButton">
+           <property name="toolTip">
+            <string>Hide/Show</string>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -377,6 +426,9 @@
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="0" column="0">
           <widget class="QPushButton" name="btnHelp">
+           <property name="toolTip">
+            <string>Help</string>
+           </property>
            <property name="text">
             <string>Help</string>
            </property>
@@ -407,6 +459,9 @@
             <font>
              <italic>false</italic>
             </font>
+           </property>
+           <property name="toolTip">
+            <string>Close</string>
            </property>
            <property name="text">
             <string>Close</string>

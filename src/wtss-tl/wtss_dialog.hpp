@@ -84,19 +84,11 @@ namespace wtss
 
       void set_map_display(te::qt::widgets::MapDisplay* mapDisplay);
 
-      void do_timeseries_query(wtss::cxx::timeseries_query_t query);
-
       void hide_graph(bool check);
-
-      void onPointPicked(QPointF& coord);
-
-      void closeEvent(QCloseEvent* e);
 
      public slots:
 
       void onPointPickerToggled(bool checked);
-
-      void updateZoom();
 
      protected slots:
 
@@ -116,15 +108,17 @@ namespace wtss
 
       void onCloseButtonClicked();
 
-      void onExportGraphClicked();
-
       void onImportGraphClicked();
+
+      void onExportGraphClicked();
 
       void onQueryButtonClicked();
 
       void onAddCoordToList(QListWidgetItem* coordSelected);
 
-      void onGetPointCoordenate(QPointF &coord);
+      void onGetPointCoordinate(QPointF &coord);
+
+      void onUpdateZoom();
 
      signals:
 
@@ -136,29 +130,36 @@ namespace wtss
 
       void load_settings();
 
-      void define_display();
-
-      void define_marker();
-
       void add_server(QString server);
 
       void add_coverage(QTreeWidgetItem* server);
 
-      void add_atributes(QTreeWidgetItem* coverageItem, QJsonObject j_coverage);
-
-      void add_result_to_plot();
+      void add_atributes(QTreeWidgetItem* coverageItem,
+                         QJsonObject j_coverage);
 
       bool validate_query();
 
+      void do_timeseries_query(wtss::cxx::timeseries_query_t query);
+
+      void convert_to_time_series(cxx::timeseries_query_result_t result);
+
+      std::vector<te::st::TimeSeries*> get_time_series();
+
       void plot_time_series();
 
-      void addMarker(double x, double y);
+      void define_display();
 
-      void clearCanvas();
+      void define_marker();
+
+      void point_picked(QPointF& coord);
+
+      void add_marker(double x, double y);
 
       QColor random_color();
 
-      std::vector<te::st::TimeSeries*> get_time_series();
+      void clear_canvas();
+
+      void closeEvent(QCloseEvent* e);
 
      private:
 
@@ -176,9 +177,11 @@ namespace wtss
 
       double m_upperBound;
 
-      std::string m_lastQueriedServer;
-
       QJsonObject j_config;
+
+      wtss::cxx::timeseries_query_result_t m_result;
+
+      std::string m_lastQueriedServer;
 
       te::qt::widgets::MapDisplay* m_mapDisplay;
 
@@ -190,12 +193,9 @@ namespace wtss
 
       std::vector<te::st::TimeSeries*> m_timeSeriesVec;
 
-      wtss::cxx::timeseries_query_result_t m_result;
-
       te::color::RGBAColor** m_rgbaMarker;
 
       te::se::Mark* m_marker;
-
     };
   }  // end namespace tl
 }  // end namespace wtss
