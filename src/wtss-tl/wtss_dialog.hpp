@@ -145,7 +145,6 @@ namespace wtss
 
       void convert_to_time_series(cxx::timeseries_query_result_t result);
 
-
       void plot_time_series();
 
       void define_display();
@@ -157,6 +156,8 @@ namespace wtss
       void add_marker(double x, double y);
 
       QColor random_color();
+
+      void add_location(double x, double y);
 
       void clear_canvas();
 

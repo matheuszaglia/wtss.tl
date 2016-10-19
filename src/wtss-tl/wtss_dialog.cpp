@@ -524,9 +524,6 @@ void wtss::tl::wtss_dialog::onGetPointCoordinate(QPointF& coord)
   {
      do_timeseries_query(query);
 
-     m_ui->m_coordSListWidget->addItem(QString::number(query.longitude)+","+
-                                        QString::number(query.latitude));
-
      add_marker(query.longitude, query.latitude);
   }
 
@@ -786,6 +783,8 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
     return;
   }
 
+  add_location(query.longitude, query.latitude);
+
   plot_time_series();
 }
 
@@ -905,6 +904,19 @@ QColor wtss::tl::wtss_dialog::random_color()
   int g = rand() % 255;
   int b = rand() % 255;
   return QColor(r, g, b);
+}
+
+void wtss::tl::wtss_dialog::add_location(double x, double y)
+{
+   QList<QListWidgetItem *> coord =
+           m_ui->m_coordSListWidget->findItems(QString::number(x)+","
+                                               +QString::number(y),
+                                               Qt::MatchExactly);
+   if(coord.length() != 0)
+      return;
+
+    m_ui->m_coordSListWidget->addItem(QString::number(x)+","+
+                                       QString::number(y));
 }
 
 void wtss::tl::wtss_dialog::clear_canvas()
