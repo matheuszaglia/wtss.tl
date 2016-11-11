@@ -34,7 +34,7 @@ project(wtss_tl)
 
 # variables that control the system versioning
 set(WTSS_TL_VERSION_MAJOR 0)
-set(WTSS_TL_VERSION_MINOR 2)
+set(WTSS_TL_VERSION_MINOR 3)
 set(WTSS_TL_VERSION_PATCH 0)
 set(WTSS_TL_VERSION_STATUS "")
 set(WTSS_TL_VERSION_STATUS_FULL "")

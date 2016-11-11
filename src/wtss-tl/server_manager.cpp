@@ -198,6 +198,31 @@ void wtss::tl::server_manager::removeServer(const QString &server_uri)
   }
 }
 
+void wtss::tl::server_manager::addDateFilter(const QString startDate,
+                                             const QString endDate)
+{
+  QJsonDocument j_doc = loadSettings();
+  QJsonObject j_object = j_doc.object();
+
+  QJsonObject j_dateFilter;
+  j_dateFilter["start_date"] = startDate;
+  j_dateFilter["end_date"] = endDate;
+
+  j_object["date_filter"] = j_dateFilter;
+  j_doc.setObject(j_object);
+  saveSettings(j_doc);
+}
+
+QJsonObject wtss::tl::server_manager::getDateFilter()
+{
+  QJsonDocument j_doc = loadSettings();
+  QJsonObject j_object = j_doc.object();
+
+  QJsonObject j_dateFilter = j_object.find("date_filter").value().toObject();
+
+  return j_dateFilter;
+}
+
 QJsonObject wtss::tl::server_manager::getAttribute(const QString &server_uri,
                                                    const QString &cv_name,
                                                    const QString &attribute)

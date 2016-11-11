@@ -39,15 +39,24 @@
 #include <QObject>
 #include <QTreeWidget>
 #include <QtGui>
-
-// QCustomPlot
-#include "qcustomplot.h"
+#include <QGridLayout>
 
 // wtss.cxx
 #include <wtss-cxx/data_types.hpp>
 
 // TerraLib
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
+#include <terralib/qt/widgets/canvas/Canvas.h>
+#include <terralib/common.h>
+#include <terralib/datatype/Date.h>
+
+#include <terralib/qt/widgets/charts/ChartDisplay.h>
+#include <terralib/qt/widgets/charts/ChartDisplayWidget.h>
+#include <terralib/qt/widgets/charts/ChartStyle.h>
+#include <terralib/qt/widgets/charts/TimeSeriesChart.h>
+#include <terralib/st/core/timeseries/TimeSeries.h>
+#include <terralib/se/Mark.h>
+
 
 namespace Ui
 {
@@ -75,11 +84,13 @@ namespace wtss
 
       void set_map_display(te::qt::widgets::MapDisplay* mapDisplay);
 
-      void set_wtss_tool();
-
-      void do_timeseries_query(wtss::cxx::timeseries_query_t query);
-
       void hide_graph(bool check);
+
+      std::vector<te::st::TimeSeries*> get_time_series();
+
+     public slots:
+
+      void onPointPickerToggled(bool checked);
 
      protected slots:
 
@@ -93,17 +104,29 @@ namespace wtss
 
       void onHideButtonClicked();
 
+      void onHideCoordSelectedsClicked();
+
       void onHelpButtonClicked();
 
       void onCloseButtonClicked();
 
-      void onExportGraphClicked();
-
       void onImportGraphClicked();
+
+      void onExportGraphClicked();
 
       void onQueryButtonClicked();
 
-      void onXAxisRangeChanged(QCPRange range);
+      void onAddCoordToList(QListWidgetItem* coordSelected);
+
+      void onGetPointCoordinate(QPointF &coord);
+
+      void onUpdateZoom();
+
+     signals:
+
+      void pointPicked(QPointF& coord);
+
+      void close();
 
      private:
 
@@ -113,16 +136,32 @@ namespace wtss
 
       void add_coverage(QTreeWidgetItem* server);
 
-      void add_atributes(QTreeWidgetItem* coverageItem, QJsonObject j_coverage);
-
-      void add_result_to_plot(QString server_uri,
-                              wtss::cxx::timeseries_query_result_t result);
+      void add_atributes(QTreeWidgetItem* coverageItem,
+                         QJsonObject j_coverage);
 
       bool validate_query();
 
-      void plot_result();
+      void do_timeseries_query(wtss::cxx::timeseries_query_t query);
+
+      void convert_to_time_series(cxx::timeseries_query_result_t result);
+
+      void plot_time_series();
+
+      void define_display();
+
+      void define_marker();
+
+      void point_picked(QPointF& coord);
+
+      void add_marker(double x, double y);
 
       QColor random_color();
+
+      void add_location(double x, double y);
+
+      void clear_canvas();
+
+      void closeEvent(QCloseEvent* e);
 
      private:
 
@@ -136,13 +175,29 @@ namespace wtss
 
       bool m_checkAttribute;
 
+      double m_lowerBound;
+
+      double m_upperBound;
+
       QJsonObject j_config;
+
+      wtss::cxx::timeseries_query_result_t m_result;
+
+      std::string m_lastQueriedServer;
 
       te::qt::widgets::MapDisplay* m_mapDisplay;
 
-      double lowerBound;
+      te::qt::widgets::ChartDisplay* m_chartDisplay;
 
-      double upperBound;
+      te::qt::widgets::ChartStyle* m_chartStyle;
+
+      te::qt::widgets::TimeSeriesChart* m_timeSeriesChart;
+
+      std::vector<te::st::TimeSeries*> m_timeSeriesVec;
+
+      te::color::RGBAColor** m_rgbaMarker;
+
+      te::se::Mark* m_marker;
     };
   }  // end namespace tl
 }  // end namespace wtss
