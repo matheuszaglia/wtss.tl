@@ -27,7 +27,16 @@
 #ifndef __WTSS_TL_CONFIG_HPP__
 #define __WTSS_TL_CONFIG_HPP__
 
-// WTSS.TL
-#include "wtss_tl_config.hpp"
+#define TE_QT_WTSS_PLUGIN_NAME "te.qt.wtss"
+
+#ifdef WIN32
+  #ifdef WTSSTLDLL
+    #define WTSSTLEXPORT __declspec(dllexport)
+  #else
+    #define WTSSTLEXPORT __declspec(dllimport)
+  #endif
+#else
+  #define WTSSTLEXPORT
+#endif
 
 #endif  // __WTSS_TL_CONFIG_HPP__

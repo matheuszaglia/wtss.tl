@@ -29,12 +29,12 @@
 #ifndef __WTSS_PLUGIN_HPP__
 #define __WTSS_PLUGIN_HPP__
 
-#define TE_QT_WTSS_PLUGIN_NAME "te.qt.wtss"
-
-#include "wtss-tl/wtss_dialog.hpp"
+// wtss.tl
+#include "config.hpp"
+#include "wtss_dialog.hpp"
 
 // TerraLib
-#include <terralib/plugin/Plugin.h>
+#include <terralib/plugin/CppPlugin.h>
 
 // QT
 #include <QAction>
@@ -62,7 +62,7 @@ namespace wtss
 {
   namespace tl
   {
-    class Plugin : public QObject, public te::plugin::Plugin
+    class Plugin : public QObject, public te::plugin::CppPlugin
     {
       Q_OBJECT
 
@@ -75,6 +75,8 @@ namespace wtss
 
       void shutdown();
 
+      te::qt::widgets::MapDisplay* get_map_display();
+
      protected:
       void registerActions();
 
@@ -85,25 +87,24 @@ namespace wtss
       void triggered(te::qt::af::evt::Event* e);
 
      protected:
-      QAction* m_actionManageServices;
-      QAction* m_actionQuery;
       QMenu* m_menu;
-      QMenu* m_wtssMenu;
-      QToolBar* m_wtssToolBar;
+      QAction* m_wtssAction;
+      QAction* m_actionManageServices;
       QAction* m_timeSeriesAction;
+      QToolBar* m_wtssToolBar;
 
      protected slots:
       void onServerActionActivated();
+
       void onActionQueryToggled();
+
+      void onActionActivated(bool);
 
      private:
       wtss::tl::wtss_dialog* m_wtssDlg;
     };
   }
 }
+PLUGIN_CALL_BACK_DECLARATION(WTSSTLEXPORT)
 
-#define export_macro
-
-PLUGIN_CALL_BACK_DECLARATION(export_macro)
-
-#endif
+#endif //__WTSS_PLUGIN_HPP__

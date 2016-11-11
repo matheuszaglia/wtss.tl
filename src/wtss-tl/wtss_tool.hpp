@@ -25,8 +25,8 @@
   \author Matheus Cavassan Zaglia
  */
 
-#ifndef __WTSS_TL_TIME_SERIES_TOOL_HPP__
-#define __WTSS_TL_TIME_SERIES_TOOL_HPP__
+#ifndef __WTSS_TL_WTSS_TOOL_HPP__
+#define __WTSS_TL_WTSS_TOOL_HPP__
 
 // QT
 #include <QDialog>
@@ -42,23 +42,21 @@ namespace wtss
 {
   namespace tl
   {
-    class time_series_tool : public te::qt::widgets::AbstractTool
+    class wtss_tool : public te::qt::widgets::AbstractTool
     {
       Q_OBJECT
 
      public:
-      time_series_tool(te::qt::widgets::MapDisplay* display,
+      wtss_tool(te::qt::widgets::MapDisplay* display,
                        QObject* parent = 0);
-      ~time_series_tool();
+      ~wtss_tool();
 
       bool mouseReleaseEvent(QMouseEvent* e);
 
      private:
-      QDialog* m_dialog;
-
       wtss::tl::wtss_dialog* m_wtssDlg;
     };
   }
 }
 
-#endif  // __WTSS_TL_TIME_SERIES_TOOL_HPP__
+#endif  // __WTSS_TL_WTSS_TOOL_HPP__

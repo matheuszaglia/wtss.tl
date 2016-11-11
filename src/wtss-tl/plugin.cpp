@@ -28,6 +28,9 @@
 
 // wtss
 #include "plugin.hpp"
+#include "server_manager.hpp"
+#include "wtss_dialog.hpp"
+#include "wtss_tool.hpp"
 
 // QT
 #include <QApplication>
@@ -43,13 +46,9 @@
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
 #include <terraview/TerraView.h>
 
-// wtss.tl
-#include "server_manager.hpp"
-#include "wtss_dialog.hpp"
-#include "wtss_tool.hpp"
 
 wtss::tl::Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo)
-    : QObject(), te::plugin::Plugin(pluginInfo), m_wtssDlg(0)
+    : QObject(), te::plugin::CppPlugin(pluginInfo), m_wtssDlg(0)
 {
   te::qt::af::AppCtrlSingleton::getInstance().addListener(this,
                                                           te::qt::af::SENDER);
@@ -58,62 +57,42 @@ wtss::tl::Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo)
 wtss::tl::Plugin::~Plugin() {}
 void wtss::tl::Plugin::startup()
 {
-  if(m_initialized) return;
+  if(m_initialized)
+      return;
 
   m_initialized = true;
 
   {
-    m_menu = te::qt::af::AppCtrlSingleton::getInstance().getMenu("Tools");
-    QAction* m_act = te::qt::af::AppCtrlSingleton::getInstance().findAction(
-        "Tools.Customize");
+    m_menu = te::qt::af::AppCtrlSingleton::getInstance().getMenu("Plugins");
 
-    m_wtssMenu = new QMenu(m_menu);
-    m_wtssMenu->setTitle("Web Time Series Services");
-    m_wtssMenu->setIcon(QIcon::fromTheme("chart-time-series"));
-    m_wtssMenu->setObjectName("Tools.WTSS");
+    m_wtssAction = new QAction(this);
+    m_wtssAction->setText("Web Time Series Services");
+    m_wtssAction->setIcon(QIcon::fromTheme("chart-time-series"));
+    m_wtssAction->setObjectName("Tools.WTSS");
 
-    QAction* pluginsSeparator =
-        te::qt::af::AppCtrlSingleton::getInstance().findAction(
-            "ManagePluginsSeparator");
-    m_menu->insertMenu(m_act, m_wtssMenu);
-    m_menu->insertAction(m_act, pluginsSeparator);
+    m_menu->addAction(m_wtssAction);
 
-    m_actionManageServices = new QAction(m_wtssMenu);
+    m_actionManageServices = new QAction(this);
     m_actionManageServices->setText("Manage Services...");
     m_actionManageServices->setObjectName(
         "Tools.WTSS.Manage Web Time Series Services");
     m_actionManageServices->setIcon(QIcon::fromTheme("preferences-system"));
-    m_wtssMenu->addAction(m_actionManageServices);
 
-    m_timeSeriesAction = new QAction(m_wtssMenu);
+    m_timeSeriesAction = new QAction(this);
     m_timeSeriesAction->setText("Query Time Series...");
     m_timeSeriesAction->setObjectName("Tools.WTSS.Query Time Series");
     m_timeSeriesAction->setCheckable(true);
     m_timeSeriesAction->setIcon(QIcon::fromTheme("chart-time-series"));
     m_timeSeriesAction->setEnabled(true);
-    m_wtssMenu->addAction(m_timeSeriesAction);
 
-    m_wtssToolBar =
-        te::qt::af::AppCtrlSingleton::getInstance().getToolBar("WTSSToolBar");
-
-    if(m_wtssToolBar == 0)
-    {
-      m_wtssToolBar = new QToolBar;
-      m_wtssToolBar->setObjectName("WTSS Tool Bar");
-      m_wtssToolBar->addAction(m_timeSeriesAction);
-      m_wtssToolBar->setEnabled(true);
-    }
-
-    te::qt::af::AppCtrlSingleton::getInstance().addToolBar("WTSSToolBar",
-                                                           m_wtssToolBar);
+    m_wtssToolBar = new QToolBar("WTSS Toolbar");
+    m_wtssToolBar->addAction(m_actionManageServices);
+    m_wtssToolBar->addAction(m_timeSeriesAction);
+    m_wtssToolBar->setEnabled(true);
 
     registerActions();
 
-    te::qt::af::AddToolBarToSettings(m_wtssToolBar);
-    te::qt::af::UpdateToolBarsInTheSettings(
-        &te::qt::af::AppCtrlSingleton::getInstance());
-
-    QActionGroup* m_wtssTool =
+   QActionGroup* m_wtssTool =
         te::qt::af::AppCtrlSingleton::getInstance().findActionGroup(
             "Map.ToolsGroup");
     assert(m_wtssTool);
@@ -124,40 +103,61 @@ void wtss::tl::Plugin::startup()
 
 void wtss::tl::Plugin::shutdown()
 {
-  if(!m_initialized) return;
+  if(!m_initialized)
+      return;
+
   m_initialized = false;
 
+  delete m_wtssAction;
   delete m_actionManageServices;
   delete m_timeSeriesAction;
-  //  delete m_actionQuery;
-  te::qt::af::RemoveToolBarFromSettings(m_wtssToolBar);
-  te::qt::af::UpdateToolBarsInTheSettings(
-      &te::qt::af::AppCtrlSingleton::getInstance());
   delete m_wtssToolBar;
-  delete m_wtssMenu;
-  te::qt::af::AppCtrlSingleton::getInstance().removeToolBar("WTSSToolBar");
+
+  te::qt::af::AppCtrlSingleton::getInstance().removeToolBar("WTSS Toolbar");
+
+  te::qt::af::AppCtrlSingleton::getInstance().removeListener(this);
 }
 
 void wtss::tl::Plugin::registerActions()
 {
+  connect(m_wtssAction, SIGNAL(triggered(bool)), this,
+          SLOT(onActionActivated(bool)));
+
   connect(m_actionManageServices, SIGNAL(triggered()), this,
           SLOT(onServerActionActivated()));
+
   connect(m_timeSeriesAction, SIGNAL(toggled(bool)), this,
           SLOT(onActionQueryToggled()));
 }
 
 void wtss::tl::Plugin::unregisterActions() {}
 
+te::qt::widgets::MapDisplay* wtss::tl::Plugin::get_map_display()
+{
+  te::qt::af::BaseApplication* baseApplication =
+      dynamic_cast<te::qt::af::BaseApplication*>(
+          te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
+
+  return baseApplication->getMapDisplay();
+}
+
+void wtss::tl::Plugin::onActionActivated(bool)
+{
+  te::qt::af::evt::NewActionsAvailable e;
+  e.m_toolbar = m_wtssToolBar;
+  e.m_category = "WTSSToolbar";
+
+  emit triggered(&e);
+}
+
 void wtss::tl::Plugin::onServerActionActivated()
 {
   m_wtssDlg = new wtss::tl::wtss_dialog(
       te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
 
-  te::qt::af::BaseApplication* baseApplication =
-      dynamic_cast<te::qt::af::BaseApplication*>(
-          te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
+  m_wtssDlg->set_map_display(get_map_display());
 
-  m_wtssDlg->set_map_display(baseApplication->getMapDisplay());
+  m_wtssDlg->hide_graph(true);
 
   m_wtssDlg->setModal(false);
 
@@ -166,17 +166,12 @@ void wtss::tl::Plugin::onServerActionActivated()
 
 void wtss::tl::Plugin::onActionQueryToggled()
 {
-  te::qt::af::BaseApplication* baseApplication =
-      dynamic_cast<te::qt::af::BaseApplication*>(
-          te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
+  m_wtssDlg = new wtss::tl::wtss_dialog(
+     te::qt::af::AppCtrlSingleton::getInstance().getMainWindow());
 
-  if(baseApplication->getMapDisplay())
-  {
-    baseApplication->getMapDisplay()->setCursor(Qt::CrossCursor);
-    wtss::tl::time_series_tool* tool =
-        new wtss::tl::time_series_tool(baseApplication->getMapDisplay());
-    baseApplication->getMapDisplay()->setCurrentTool(tool);
-  }
+  m_wtssDlg->set_map_display(get_map_display());
+
+  m_wtssDlg->set_wtss_tool();
 }
 
 PLUGIN_CALL_BACK_IMPL(wtss::tl::Plugin)

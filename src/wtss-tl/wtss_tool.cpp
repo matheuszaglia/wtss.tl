@@ -18,7 +18,7 @@
  */
 
 /*!
-  \file wtss-tl/time_series_tool.cpp
+  \file wtss-tl/wtss_tool.cpp
 
   \brief Time series tool for Web Time Series Services plugin.
 
@@ -36,15 +36,14 @@
 #include <terralib/qt/af/ApplicationController.h>
 #include <terralib/qt/widgets/canvas/MapDisplay.h>
 
-wtss::tl::time_series_tool::time_series_tool(
+wtss::tl::wtss_tool::wtss_tool(
     te::qt::widgets::MapDisplay *display, QObject *parent)
     : te::qt::widgets::AbstractTool(display, parent),
-      m_dialog(new QDialog(display)),
       m_wtssDlg(0)
 {
 }
 
-wtss::tl::time_series_tool::~time_series_tool()
+wtss::tl::wtss_tool::~wtss_tool()
 {
   if(m_wtssDlg)
   {
@@ -53,10 +52,13 @@ wtss::tl::time_series_tool::~time_series_tool()
   }
 }
 
-bool wtss::tl::time_series_tool::mouseReleaseEvent(QMouseEvent *e)
-{
+bool wtss::tl::wtss_tool::mouseReleaseEvent(QMouseEvent *e)
+{  
   QPointF qtPoint = e->localPos();
   QPointF coordPoint = m_display->transform(qtPoint);
+
+  if(e->button() != Qt::LeftButton)
+    return false;
 
   std::auto_ptr<te::srs::Converter> converter(new te::srs::Converter());
 
@@ -83,8 +85,5 @@ bool wtss::tl::time_series_tool::mouseReleaseEvent(QMouseEvent *e)
 
   m_wtssDlg->show();
 
-  //  if (m_wtssDlg->exec() != QDialog::Accepted)
-  //    return true;
-
-  //  return false;
+  return true;
 }
