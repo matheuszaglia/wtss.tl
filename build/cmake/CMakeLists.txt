@@ -42,7 +42,7 @@ set(WTSS_TL_VERSION_STRING "${WTSS_TL_VERSION_MAJOR}.${WTSS_TL_VERSION_MINOR}.${
 set(WTSS_TL_VERSION "0x000100")
 
 # variables storing absolute paths
-set(WTSS_TL_ABSOLUTE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+get_filename_component(WTSS_TL_ABSOLUTE_ROOT_DIR "../../" ABSOLUTE)
 
 # variables that control paths
 set(WTSS_TL_BASE_DESTINATION_DIR "")
