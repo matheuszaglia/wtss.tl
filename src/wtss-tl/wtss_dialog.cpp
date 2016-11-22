@@ -109,9 +109,6 @@ wtss::tl::wtss_dialog::wtss_dialog(QWidget *parent, Qt::WindowFlags f)
   connect(m_ui->m_coordSListWidget, SIGNAL(itemClicked(QListWidgetItem*)),
           this, SLOT(onAddCoordToList(QListWidgetItem*)));
 
-//  connect(m_chartDisplay->axisWidget(QwtPlot::xBottom), SIGNAL(scaleDivChanged()), this,
-//          SLOT(onUpdateZoom()));
-
   load_settings();
 
   dirty = true;
@@ -529,37 +526,6 @@ void wtss::tl::wtss_dialog::onGetPointCoordinate(QPointF& coord)
 
   wtss_dialog::setModal(false);
   wtss_dialog::show();
-}
-
-void wtss::tl::wtss_dialog::onUpdateZoom()
-{
-//  QwtScaleDiv scaleDiv = m_chartDisplay->axisScaleDiv(QwtPlot::xBottom);
-
-//  if(scaleDiv.isEmpty())
-//      return;
-
-//  if(scaleDiv.lowerBound() < m_lowerBound)
-//  {
-//     scaleDiv.setLowerBound(m_lowerBound);
-//     scaleDiv.setUpperBound(m_lowerBound + scaleDiv.range());
-
-//     if(scaleDiv.upperBound() > m_upperBound ||
-//             qFuzzyCompare(scaleDiv.range(), m_upperBound - m_lowerBound))
-//         scaleDiv.setUpperBound(m_upperBound);
-
-//     m_chartDisplay->setAxisScaleDiv(QwtPlot::xBottom, scaleDiv);
-//  }
-//  else if(scaleDiv.upperBound() > m_upperBound)
-//  {
-//     scaleDiv.setUpperBound(m_upperBound);
-//     scaleDiv.setLowerBound(m_upperBound - scaleDiv.range());
-
-//     if(scaleDiv.lowerBound() < m_lowerBound ||
-//             qFuzzyCompare(scaleDiv.range(), m_upperBound - m_lowerBound))
-//         scaleDiv.setLowerBound(m_lowerBound);
-
-//     m_chartDisplay->setAxisScaleDiv(QwtPlot::xBottom, scaleDiv);
-//  }
 }
 
 void wtss::tl::wtss_dialog::load_settings()

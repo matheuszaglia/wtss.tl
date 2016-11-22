@@ -120,8 +120,6 @@ namespace wtss
 
       void onGetPointCoordinate(QPointF &coord);
 
-      void onUpdateZoom();
-
      signals:
 
       void pointPicked(QPointF& coord);
