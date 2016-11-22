@@ -535,19 +535,9 @@ void wtss::tl::wtss_dialog::load_settings()
      j_config =
          wtss::tl::server_manager::getInstance().loadSettings().object();
 
-     for(QJsonObject::iterator it = j_config.begin();
-         it != j_config.end(); ++it)
-       add_server(it.key());
+     server_settings();
 
-     QString startDate = wtss::tl::server_manager::getInstance().
-             getDateFilter().find("start_date").value().toString();
-
-     QString endDate = wtss::tl::server_manager::getInstance().
-             getDateFilter().find("end_date").value().toString();
-
-     m_ui->m_startDateEdit->setDate(QDate::fromString(startDate, "dd/MM/yyyy"));
-
-     m_ui->m_endDateEdit->setDate(QDate::fromString(endDate, "dd/MM/yyyy"));
+     date_settings();
   }
   catch(...)
   {
@@ -557,27 +547,59 @@ void wtss::tl::wtss_dialog::load_settings()
   }
 }
 
+void wtss::tl::wtss_dialog::server_settings()
+{
+  QJsonObject j_servers = j_config.find("servers").value().toObject();
+
+  if(j_servers.isEmpty())
+     return;
+
+  for(QJsonObject::iterator it = j_servers.begin();
+      it != j_servers.end(); ++it)
+    add_server(it.key());
+}
+
+void wtss::tl::wtss_dialog::date_settings()
+{
+   QJsonObject j_datefilter = j_config.find("date_filter").value().toObject();
+
+   if(j_datefilter.isEmpty())
+      return;
+
+   QString startDate = j_datefilter.find("start_date").value().toString();
+
+   QString endDate = j_datefilter.find("end_date").value().toString();
+
+   m_ui->m_startDateEdit->setDate(QDate::fromString(startDate, "dd/MM/yyyy"));
+
+   m_ui->m_endDateEdit->setDate(QDate::fromString(endDate, "dd/MM/yyyy"));
+}
+
 void wtss::tl::wtss_dialog::add_server(QString server)
 {
-  QJsonObject j_server = j_config.find(server).value().toObject();
+  QJsonObject j_servers = j_config.find("servers").value().toObject();
+
+  QJsonObject j_server = j_servers.find(server).value().toObject();
+
   QTreeWidgetItem *serverItem =
       new QTreeWidgetItem(m_ui->m_serverTreeWidget, tree_item_type::server);
 
   serverItem->setText(0, server);
 
   serverItem->setFlags(serverItem->flags() | Qt::ItemIsUserCheckable);
+
   bool active = j_server.find("active").value().toBool();
+
   if(active)
     serverItem->setCheckState(0, Qt::Checked);
   else
     serverItem->setCheckState(0, Qt::Unchecked);
 
-  add_coverage(serverItem);
+  add_coverage(serverItem, j_server);
 }
 
-void wtss::tl::wtss_dialog::add_coverage(QTreeWidgetItem *server)
+void wtss::tl::wtss_dialog::add_coverage(QTreeWidgetItem *serverItem, QJsonObject j_server)
 {
-  QJsonObject j_server = j_config.find(server->text(0)).value().toObject();
   QJsonObject j_coverages = j_server["coverages"].toObject();
 
   for(QJsonObject::iterator it = j_coverages.begin(); it != j_coverages.end();
@@ -596,7 +618,7 @@ void wtss::tl::wtss_dialog::add_coverage(QTreeWidgetItem *server)
     else
       coverageItem->setCheckState(0, Qt::Unchecked);
 
-    server->addChild(coverageItem);
+    serverItem->addChild(coverageItem);
 
     add_atributes(coverageItem, it.value().toObject());
   }
@@ -673,14 +695,16 @@ void wtss::tl::wtss_dialog::do_timeseries_query(
   if(j_object.isEmpty())
     return;
 
+  QJsonObject j_servers = j_object.find("servers").value().toObject();
+
   QJsonObject j_server;
 
   m_checkServer = false;
   m_checkCoverage = false;
   m_checkAttribute = false;
 
-  for(QJsonObject::iterator it_server = j_object.begin();
-      it_server != j_object.end(); ++it_server)
+  for(QJsonObject::iterator it_server = j_servers.begin();
+      it_server != j_servers.end(); ++it_server)
   {
     j_server = it_server.value().toObject();
 

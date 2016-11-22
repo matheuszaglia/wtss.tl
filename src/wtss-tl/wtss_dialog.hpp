@@ -130,9 +130,14 @@ namespace wtss
 
       void load_settings();
 
+      void server_settings();
+
+      void date_settings();
+
       void add_server(QString server);
 
-      void add_coverage(QTreeWidgetItem* server);
+      void add_coverage(QTreeWidgetItem* serverItem,
+                        QJsonObject j_server);
 
       void add_atributes(QTreeWidgetItem* coverageItem,
                          QJsonObject j_coverage);
