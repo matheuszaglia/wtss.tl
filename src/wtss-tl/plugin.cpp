@@ -44,8 +44,8 @@
 #include <terraview/TerraView.h>
 
 
-wtss::tl::Plugin::Plugin(const te::plugin::PluginInfo& pluginInfo)
-    : QObject(), te::plugin::CppPlugin(pluginInfo), m_wtssDlg(0)
+wtss::tl::Plugin::Plugin(const te::core::PluginInfo& pluginInfo)
+    : QObject(), te::core::CppPlugin(pluginInfo), m_wtssDlg(0)
 {
   te::qt::af::AppCtrlSingleton::getInstance().addListener(this,
                                                           te::qt::af::SENDER);
@@ -191,4 +191,4 @@ void wtss::tl::Plugin::onClose()
   }
 }
 
-PLUGIN_CALL_BACK_IMPL(wtss::tl::Plugin)
+TERRALIB_PLUGIN_CALL_BACK_IMPL(wtss::tl::Plugin)

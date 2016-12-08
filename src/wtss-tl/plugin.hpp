@@ -34,7 +34,7 @@
 #include "wtss_dialog.hpp"
 
 // TerraLib
-#include <terralib/plugin/CppPlugin.h>
+#include <terralib/core/plugin/CppPlugin.h>
 
 // QT
 #include <QAction>
@@ -62,12 +62,12 @@ namespace wtss
 {
   namespace tl
   {
-    class Plugin : public QObject, public te::plugin::CppPlugin
+    class Plugin : public QObject, public te::core::CppPlugin
     {
       Q_OBJECT
 
      public:
-      Plugin(const te::plugin::PluginInfo& pluginInfo);
+      Plugin(const te::core::PluginInfo& pluginInfo);
 
       ~Plugin();
 
@@ -107,6 +107,5 @@ namespace wtss
     };
   }
 }
-PLUGIN_CALL_BACK_DECLARATION(WTSSTLEXPORT)
 
 #endif //__WTSS_PLUGIN_HPP__

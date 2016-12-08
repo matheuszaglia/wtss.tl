@@ -84,7 +84,9 @@ void wtss::tl::server_manager::addServer(const QString &server_uri)
   QJsonDocument j_doc = loadSettings();
   QJsonObject j_object = j_doc.object();
 
-  if(!j_object.contains(server_uri))
+  QJsonObject j_servers = j_object.find("servers").value().toObject();
+
+  if(!j_servers.contains(server_uri))
   {
     QJsonObject j_coverages;
     QJsonObject j_server;
@@ -116,7 +118,9 @@ void wtss::tl::server_manager::addServer(const QString &server_uri)
 
       j_server["active"] = QJsonValue(false);
       j_server["coverages"] = j_coverages;
-      j_object[server_uri] = j_server;
+      j_servers[server_uri] = j_server;
+
+      j_object["servers"] = j_servers;
       j_doc.setObject(j_object);
       saveSettings(j_doc);
     }
@@ -137,7 +141,9 @@ void wtss::tl::server_manager::refreshServer(const QString &server_uri)
   QJsonDocument j_doc = loadSettings();
   QJsonObject j_object = j_doc.object();
 
-  if(j_object.contains(server_uri))
+  QJsonObject j_servers = j_object.find("servers").value().toObject();;
+
+  if(j_servers.contains(server_uri))
   {
     QJsonObject j_coverages;
     QJsonObject j_server;
@@ -169,7 +175,9 @@ void wtss::tl::server_manager::refreshServer(const QString &server_uri)
 
       j_server["active"] = QJsonValue(false);
       j_server["coverages"] = j_coverages;
-      j_object[server_uri] = j_server;
+      j_servers[server_uri] = j_server;
+
+      j_object["servers"] = j_servers;
       j_doc.setObject(j_object);
       saveSettings(j_doc);
     }
@@ -190,9 +198,12 @@ void wtss::tl::server_manager::removeServer(const QString &server_uri)
   QJsonDocument j_doc = loadSettings();
   QJsonObject j_object = j_doc.object();
 
-  if(j_object.contains(server_uri))
+  QJsonObject j_servers = j_object.find("servers").value().toObject();
+
+  if(j_servers.contains(server_uri))
   {
-    j_object.remove(server_uri);
+    j_servers.remove(server_uri);
+    j_object["servers"] = j_servers;
     j_doc.setObject(j_object);
     saveSettings(j_doc);
   }
@@ -230,14 +241,16 @@ QJsonObject wtss::tl::server_manager::getAttribute(const QString &server_uri,
   QJsonDocument j_doc = loadSettings();
   QJsonObject j_object = j_doc.object();
 
-  if(!j_object.contains(server_uri))
+  QJsonObject j_servers = j_object.find("servers").value().toObject();
+
+  if(!j_servers.contains(server_uri))
   {
     boost::format err_msg("Could not find the server: %1%");
     throw out_of_range_exception()
         << error_description((err_msg % server_uri.toUtf8().data()).str());
   }
 
-  QJsonObject j_server = j_object.find(server_uri).value().toObject();
+  QJsonObject j_server = j_servers.find(server_uri).value().toObject();
 
   if(!j_server.contains("coverages"))
   {
@@ -280,31 +293,35 @@ void wtss::tl::server_manager::changeStatusServer(const QString &server_uri)
   QJsonDocument j_doc = loadSettings();
   QJsonObject j_object = j_doc.object();
 
-  if(!j_object.contains(server_uri))
+  QJsonObject j_servers = j_object.find("servers").value().toObject();
+
+  if(!j_servers.contains(server_uri))
   {
     boost::format err_msg("Could not find the server: %1%");
     throw out_of_range_exception()
         << error_description((err_msg % server_uri.toUtf8().data()).str());
   }
 
-  QJsonObject j_server = j_object.find(server_uri).value().toObject();
+  QJsonObject j_server = j_servers.find(server_uri).value().toObject();
 
   bool active = j_server.find("active").value().toBool();
   j_server["active"] = !active;
 
   if(!active)
   {
-    for(QJsonObject::iterator it = j_object.begin(); it != j_object.end(); ++it)
+    for(QJsonObject::iterator it = j_servers.begin(); it != j_servers.end(); ++it)
     {
       if(it.key() != server_uri)
       {
         QJsonObject j_sv = it.value().toObject();
         j_sv["active"] = QJsonValue(false);
-        j_object[it.key()] = j_sv;
+        j_servers[it.key()] = j_sv;
       }
     }
   }
-  j_object[server_uri] = j_server;
+
+  j_servers[server_uri] = j_server;
+  j_object["servers"] = j_servers;
   j_doc.setObject(j_object);
   saveSettings(j_doc);
 }
@@ -315,14 +332,16 @@ void wtss::tl::server_manager::changeStatusCoverage(const QString &server_uri,
   QJsonDocument j_doc = loadSettings();
   QJsonObject j_object = j_doc.object();
 
-  if(!j_object.contains(server_uri))
+  QJsonObject j_servers = j_object.find("servers").value().toObject();
+
+  if(!j_servers.contains(server_uri))
   {
     boost::format err_msg("Could not find the server: %1%");
     throw out_of_range_exception()
         << error_description((err_msg % server_uri.toUtf8().data()).str());
   }
 
-  QJsonObject j_server = j_object.find(server_uri).value().toObject();
+  QJsonObject j_server = j_servers.find(server_uri).value().toObject();
 
   if(!j_server.contains("coverages"))
   {
@@ -357,8 +376,11 @@ void wtss::tl::server_manager::changeStatusCoverage(const QString &server_uri,
 
   j_coverages[cv_name] = j_coverage;
   j_server["coverages"] = j_coverages;
-  j_object[server_uri] = j_server;
+  j_servers[server_uri] = j_server;
+
+  j_object["servers"] = j_servers;
   j_doc.setObject(j_object);
+
   saveSettings(j_doc);
 }
 
@@ -369,14 +391,16 @@ void wtss::tl::server_manager::changeStatusAttribute(const QString &server_uri,
   QJsonDocument j_doc = loadSettings();
   QJsonObject j_object = j_doc.object();
 
-  if(!j_object.contains(server_uri))
+  QJsonObject j_servers = j_object.find("servers").value().toObject();
+
+  if(!j_servers.contains(server_uri))
   {
     boost::format err_msg("Could not find the server: %1%");
     throw out_of_range_exception()
         << error_description((err_msg % server_uri.toUtf8().data()).str());
   }
 
-  QJsonObject j_server = j_object.find(server_uri).value().toObject();
+  QJsonObject j_server = j_servers.find(server_uri).value().toObject();
 
   if(!j_server.contains("coverages"))
   {
@@ -425,9 +449,13 @@ void wtss::tl::server_manager::changeStatusAttribute(const QString &server_uri,
 
   j_attributes[attribute] = j_attribute;
   j_coverage["attributes"] = j_attributes;
+
   j_coverages[cv_name] = j_coverage;
   j_server["coverages"] = j_coverages;
-  j_object[server_uri] = j_server;
+
+  j_servers[server_uri] = j_server;
+  j_object["servers"] = j_servers;
+
   j_doc.setObject(j_object);
   saveSettings(j_doc);
 }

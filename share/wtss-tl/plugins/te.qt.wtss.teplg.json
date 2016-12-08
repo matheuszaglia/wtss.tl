@@ -1,0 +1,26 @@
+{
+	"name":"te.qt.wtss",
+	"display_name":"Web Time Series Service Plugin",
+	"description":"This plugin enables TerraView to access time series from a WTSS server.",
+	"version":"5.0.0",
+	"release":"2013-01-01",
+	"engine":"C++",
+	"license_description":"GNU Lesser General Public License v 3.0",
+	"license_URL":"http://www.gnu.org/licenses/lgpl-3.0-standalone.html",
+	"site":"http://www.dpi.inpe.br/terralib5/wiki/doku.php?id=wiki:designimplementation:ws:wtss",
+	"dependencies":[],
+	"linked_libraries":[],
+	"resources":{"shared_library_name":"terralib_mod_qt_plugin_wtss"},
+	"parameters":[],
+	"provider":{
+		"name":"E-sensing",
+		"site":"http://www.dpi.inpe.br/terralib5",
+		"email":"esensing-team@dpi.inpe.br"
+	},
+	"host_application":{
+		"name":"TerraLib",
+		"version":"5.2.0"
+	}
+
+
+}
